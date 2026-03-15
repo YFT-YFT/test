@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SimultaneousInterpreter</title>
+  <title>SimultaneousInterpretation</title>
   <style>
     :root { --main-fs: 75px; --sub-fs: 25px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
@@ -85,12 +85,12 @@
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver 203 Professional</div>
+  <div class="footer-text">Ver.204</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
 <div id="modal-help">
-  <h2>📖 SimultaneousInterpreter 操作マニュアル</h2>
+  <h2>📖 SimultaneousInterpretation 操作マニュアル</h2>
   
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
@@ -387,6 +387,32 @@ function saveLogFile() {
       btnToggle.textContent = "同時翻訳開始"; btnToggle.style.background = "#0066ff";
     }
 };
+// 現在の入力（暫定テキスト）をリセットする関数
+function resetInterim() {
+  currentText = "";
+  interimContainer.textContent = "";
+  
+  // 視覚的なフィードバック（一瞬だけ背景を白く光らせる）
+  interimContainer.style.background = "rgba(255,255,255,0.2)";
+  setTimeout(() => {
+    interimContainer.style.background = "transparent";
+  }, 100);
+
+  if (isListening) {
+    restartRecognition();
+  }
+}
+// Escキーでリセット
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    resetInterim();
+  }
+});
+
+// 暫定ボックス（青枠）をクリックでリセット
+interimContainer.style.cursor = "pointer"; // カーソルを指マークに
+interimContainer.onclick = resetInterim;
+interimContainer.title = "クリックで入力をリセット";
 
 // マニュアル表示切り替え
   const btnHelp = document.getElementById('btn-help');
