@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SimultaneousInterpretation</title>
+  <title>SimultaneousInterpreter</title>
   <style>
     :root { --main-fs: 75px; --sub-fs: 25px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
@@ -62,11 +62,17 @@
 
 <div class="header">
   <button id="btn-toggle" style="background:#0066ff; color:#fff; border:none; padding:8px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">同時翻訳開始</button>
-  <div class="group">音声:<select id="sel-in"></select> 翻訳:<select id="sel-out"></select></div>
+  <div class="group">
+  音声:<select id="sel-in"></select>
+  <button id="btn-swap" style="background:#444; color:#fff; border:none; padding:0 5px; border-radius:4px; cursor:pointer; font-size:14px; margin:0 2px;">⇄</button>
+  翻訳:<select id="sel-out"></select>
+</div>
   <div class="group">色:<input type="color" id="main-color" value="#ffff00"> 大:<input type="range" id="size-slider" min="40" max="150" value="75" style="width:50px"></div>
   <div class="group">ログ名:<input type="text" id="file-name" placeholder="(空で保存無)" style="width:80px"> 日時:<select id="name-date-pos"><option value="none">無</option><option value="pre" selected>前</option><option value="post">後</option></select></div>
   <div class="group">分割:<input type="number" id="split-sec" value="1.0" step="0.1" style="width:35px">秒 保存:<input type="number" id="auto-save-min" value="10" style="width:35px">分</div>
-  <button onclick="document.getElementById('modal-help').style.display='block'" style="background:#444; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">操作マニュアル</button>
+  
+  <button id="btn-help" style="background:#444; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">操作マニュアル</button>
+  
   <div class="group">
     <div id="vol-meter"><div id="vol-bar"></div></div>
     <span id="status-dot" style="font-size:10px; color:#aaa; margin-left:5px;">READY</span>
@@ -84,15 +90,15 @@
 </div>
 
 <div id="modal-help">
-  <h2>📖 SimultaneousInterpretation 操作マニュアル</h2>
+  <h2>📖 SimultaneousInterpreter 操作マニュアル</h2>
   
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
     <ul>
       <li><b>事前設定:</b> 上部バーで「音声（話す側）」と「翻訳（表示側）」を選択。デフォルトは日本語→中国語です。</li>
-      <li><b>開始:</b> 青色の「同時翻訳開始」ボタンをクリックし、マイクの使用を許可してください。</li>
+      <li><b>開始:</b> 青色の「同時翻訳開始」ボタンをクリックし、ブラウザのマイクの使用を許可してください。</li>
       <li><b>発話:</b> 画面に向かって話すと、上部の青枠（暫定ボックス）に文字が溜まり、無音を検知すると下部に確定ログとして出力されます。</li>
-      <li><b>終了・保存:</b> 「停止」ボタンを押すと、ログがテキストファイルとして自動保存されます。</li>
+      <li><b>終了・保存:</b> 「ログ名:」を入力している場合、「停止」ボタンを押すと、ログがテキストファイルとして自動保存されます。</li>
     </ul>
   </div>
 
@@ -120,27 +126,56 @@
     <ul>
       <li><b>音声解析の仕組み:</b> 音声から文字への変換はブラウザの標準機能（Googleサーバー等）を利用します。</li>
       <li><b>マイク品質:</b> 精度はマイクに依存します。静かな環境での使用や外付けマイクの使用を推奨します。</li>
-      <li><b>文字化け対策:</b> 本ソフトは「BOM付きUTF-8」で保存します。「DF」等の古い比較ソフトでもそのまま閲覧可能です。</li>
+      <li><b>文字化け対策:</b> 本ソフトは「BOM付きUTF-8」で保存します。古いソフトでも閲覧可能ですが、他ソフトで別名保存する際はエンコード設定にご注意ください。</li>
+    </ul>
+  </div>
+
+<div class="help-section">
+    <h3>5. 対応ブラウザの分類と根拠（重要）</h3>
+    <ul>
+      <li><b>◎ 動作確認済み:</b> <b>Google Chrome</b> / <b>Microsoft Edge</b>
+        <br>（根拠：開発元（Google/MS）の音声認識サーバーをフル活用できるため、最も安定して動作します。）</li>
+      <li><b>△ 条件付き動作:</b> <b>Safari (iPhone/Mac)</b>
+        <br>（根拠：動作しますが、長時間使用時に認識が止まりやすい傾向があります。）</li>
+      <li><b>× 非対応:</b> <b>Vivaldi / Brave / Opera / Firefox</b>
+        <br>（根拠：Googleの音声認識サーバーを利用する権利（API Key）が含まれていないため、マイクが反応しても文字化されません。）</li>
+      <li><b>アプリ化して使う（PWA）:</b> Chromeでメニューの「保存して共有」→<b>「アプリとしてインストール」</b>を行うと、専用ソフトのような外観で利用可能になります。</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>5. 困った時の対処法（Q&A）</h3>
+    <h3>6. 困った時の対処法（Q&A）</h3>
     <ul>
-      <li><b>Q. 字幕が出ない:</b> ブラウザの「マイク許可」設定が「オン」になっているか確認してください。</li>
-      <li><b>Q. 翻訳が途中で止まった:</b> ネットの瞬断が原因の場合があります。一度「停止」してリロード（再読み込み）してください。</li>
-      <li><b>Q. ウォッチドッグと表示された:</b> 15秒間無音だったため、接続を自動リフレッシュしました。そのまま発話を再開できます。</li>
-      <li><b>Q. 文が細切れになる:</b> 上部バーの「分割」秒数を長め（1.5〜2.0秒）に設定してください。</li>
+      <li><b>Q. 字幕が出ない:</b> 
+        <ol>
+          <li>ブラウザの「マイク許可」設定を確認してください。</li>
+          <li>Vivaldi等の非対応ブラウザを使用していないか確認してください。</li>
+          <li>ページを再読み込み（リロード）してください。</li>
+        </ol>
+      </li>
+      <li><b>Q. 翻訳が途中で止まった:</b> ネットの瞬断等が原因の場合があります。一度「停止」してリロードしてください。</li>
+      <li><b>Q. WATCHDOGと表示された:</b> 15秒間無音だったため、接続を自動リフレッシュしました。そのまま発話を再開できます。</li>
+      <li><b>Q. 文が細切れになる:</b> 上部バーの「分割」秒数を長め（例：ゆっくり話す場合は1.5秒〜2.0秒に増やす）に設定してください。</li>
     </ul>
   </div>
 
-  <div class="help-section">
-    <h3>6. データの保存と連携</h3>
+<div class="help-section">
+    <h3>7. データの保存と連携</h3>
     <ul>
-      <li><b>Excel連携:</b> 保存ログはタブ区切りです。ExcelのA1セルに貼り付けるだけで綺麗に整列します。</li>
-      <li><b>自動保存:</b> 万が一ブラウザが閉じても、設定した分ごとにバックアップが自動保存されます。</li>
+      <li><b>ログの保存条件:</b> 上部バーの「ログ名」が入力されている時のみ、停止時または自動保存時にファイルが書き出されます。</li>
+      <li><b>【推奨】保存先ダイアログを非表示にする:</b>
+        <br>自動保存をスムーズにするため、ブラウザの設定変更を推奨します。
+        <ol>
+          <li>ブラウザの「設定」→「ダウンロード」を開く。</li>
+          <li><b>「ダウンロード前に各ファイルの保存場所を確認する」</b>を<b>オフ</b>にする。</li>
+        </ol>
+        ※これでダイアログを介さず、ダウンロードフォルダへ直通で保存されるようになります。
+      </li>
+      <li><b>Excel連携:</b> 保存されたテキストファイルをメモ帳で開き、<b>中身を全選択（Ctrl+A）してコピーし、ExcelのA1セルに貼り付けてください。</b>ダブルクォーテーション等の装飾が自動的に消え、時間・原文・翻訳が綺麗に整列します。</li>
+      <li><b>自動保存（バックアップ）:</b>  「ログ名:」を入力している場合、設定した分数ごとにその時点までの内容を自動保存します。</li>
+      <li><b>保存の注意点:</b> 自動保存は「定期的な書き出し」のため、ブラウザが強制終了した直近数分間の発言は保存されない場合があります。</li>
     </ul>
-  </div>
+</div>
   <button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">マニュアルを閉じる</button>
 </div>
 
@@ -148,6 +183,30 @@
   const langData = [['日本語','ja-JP','ja'],['英語','en-US','en'],['中国語(簡体)','zh-CN','zh-CN'],['中国語(繁体)','zh-TW','zh-TW'],['中国語(広東)','zh-HK','zh-HK'],['韓国語','ko-KR','ko'],['ベトナム語','vi-VN','vi'],['タイ語','th-TH','th'],['フランス語','fr-FR','fr'],['スペイン語','es-ES','es'],['ドイツ語','de-DE','de'],['ロシア語','ru-RU','ru'],['イタリア語','it-IT','it'],['ポルトガル語','pt-PT','pt'],['インドネシア語','id-ID','id'],['フィリピン語','tl-PH','tl'],['ヒンディー語','hi-IN','hi'],['アラビア語','ar-SA','ar'],['トルコ語','tr-TR','tr'],['ポーランド語','pl-PL','pl'],['オランダ語','nl-NL','nl'],['スウェーデン語','sv-SE','sv'],['ギリシャ語','el-GR','el'],['ペルシャ語','fa-IR','fa'],['マレー語','ms-MY','ms'],['ビルマ語','my-MM','my'],['カンボジア語','km-KH','km'],['ラオス語','lo-LA','lo'],['ウクライナ語','uk-UA','uk']];
 
   const selIn = document.getElementById('sel-in'), selOut = document.getElementById('sel-out'), btnToggle = document.getElementById('btn-toggle'), logContainer = document.getElementById('log-container'), interimContainer = document.getElementById('interim-container'), mainColor = document.getElementById('main-color'), sizeSlider = document.getElementById('size-slider'), splitSecInput = document.getElementById('split-sec'), autoSaveInput = document.getElementById('auto-save-min'), fileNameInput = document.getElementById('file-name'), nameDatePos = document.getElementById('name-date-pos'), volBar = document.getElementById('vol-bar'), statusDot = document.getElementById('status-dot');
+
+const btnSwap = document.getElementById('btn-swap');
+
+  btnSwap.onclick = () => {
+    // 現在の選択値を一時保存
+    const tempIn = selIn.value; // 例: "ja-JP"
+    const valOut = selOut.value; // 例: "en"
+
+    // sel-outの値をsel-inに合わせる（前置詞が一致するものを探す）
+    // langData = [['日本語','ja-JP','ja'], ...]
+    const targetInRow = langData.find(l => l[2] === valOut);
+    const targetOutRow = langData.find(l => l[1] === tempIn);
+
+    if (targetInRow) selIn.value = targetInRow[1];
+    if (targetOutRow) selOut.value = targetOutRow[2];
+
+    // 設定を保存
+    saveSettings();
+
+    // もし録音中なら、認識言語を即座に反映させるために再起動
+    if (isListening) {
+      restartRecognition();
+    }
+  };
 
   let isListening = false, recognition, chatLog = [], lastSpeechTime = 0, autoSaveTimer, watchdogInterval, currentText = "";
   let audioContext, analyser, dataArray, animationId;
@@ -327,7 +386,13 @@ function saveLogFile() {
       statusDot.textContent = "STOPPED";
       btnToggle.textContent = "同時翻訳開始"; btnToggle.style.background = "#0066ff";
     }
+};
+
+// マニュアル表示切り替え
+  const btnHelp = document.getElementById('btn-help');
+  const modalHelp = document.getElementById('modal-help');
+  btnHelp.onclick = () => {
+    modalHelp.style.display = (modalHelp.style.display === 'block') ? 'none' : 'block';
   };
 </script>
 </body>
-</html>
