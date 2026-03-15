@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SimultaneousInterpretation</title>
+  <title>SimultaneousInterpreter</title>
   <style>
     :root { --main-fs: 75px; --sub-fs: 25px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
@@ -90,7 +90,7 @@
 </div>
 
 <div id="modal-help">
-  <h2>📖 SimultaneousInterpretation 操作マニュアル</h2>
+  <h2>📖 SimultaneousInterpreter 操作マニュアル</h2>
   
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
@@ -102,8 +102,17 @@
     </ul>
   </div>
 
+<div class="help-section">
+  <h3>2. 便利な操作・キャンセル機能</h3>
+  <ul>
+    <li><b>言語のクイック入れ替え:</b> 上部バーの「音声」と「翻訳」の間にある<b>「⇄」ボタン</b>を押すと、言語設定を瞬時に入れ替えることができます。双方向のやり取りに便利です。</li>
+    <li><b>発話のリセット（キャンセル）:</b> 言い間違えたり、認識が乱れたりした時は、確定（ログ出力）される前に<b>「Escキー」を押す</b>か、<b>上部の青枠（暫定ボックス）を直接クリック</b>してください。</li>
+    <li><b>リセットの効果:</b> 現在入力中の文字が消去され、ログにも残りません。リセット後はすぐに言い直すことができます（一瞬だけ背景が白く光ります）。</li>
+  </ul>
+</div>
+
   <div class="help-section">
-    <h3>2. セキュリティと高度な文字起こし活用</h3>
+    <h3>3. セキュリティと高度な文字起こし活用</h3>
     <ul>
       <li><b>高セキュリティ文字起こし:</b> 「音声」と「翻訳」を同じ言語（例：日本→日本）に設定した場合、外部の翻訳APIサーバーへテキストを送信する処理が完全にスキップされます。これにより、情報の外部露出を極限まで抑えた<b>「高セキュリティ文字起こし専用ソフト」</b>としても安心して活用いただけます。</li>
       <li><b>情報の保護:</b> 同言語設定時は翻訳通信が発生しないため、機密性の高い会議の「文字起こし専用ソフト」として安全かつ強力に機能します。</li>
@@ -112,7 +121,7 @@
   </div>
 
   <div class="help-section">
-    <h3>3. 想定される使用用途</h3>
+    <h3>4. 想定される使用用途</h3>
     <ul>
       <li><b>多言語会議:</b> 海外拠点とのミーティングにおけるリアルタイム字幕。</li>
       <li><b>高精度文字起こし:</b> 議事録作成の補助ツールとして（同言語設定で活用）。</li>
@@ -122,7 +131,7 @@
   </div>
 
   <div class="help-section">
-    <h3>4. 利用上の注意点</h3>
+    <h3>5. 利用上の注意点</h3>
     <ul>
       <li><b>音声解析の仕組み:</b> 音声から文字への変換はブラウザの標準機能（Googleサーバー等）を利用します。</li>
       <li><b>マイク品質:</b> 精度はマイクに依存します。静かな環境での使用や外付けマイクの使用を推奨します。</li>
@@ -131,7 +140,7 @@
   </div>
 
 <div class="help-section">
-    <h3>5. 対応ブラウザの分類と根拠（重要）</h3>
+    <h3>6. 対応ブラウザの分類と根拠（重要）</h3>
     <ul>
       <li><b>◎ 動作確認済み:</b> <b>Google Chrome</b> / <b>Microsoft Edge</b>
         <br>（根拠：開発元（Google/MS）の音声認識サーバーをフル活用できるため、最も安定して動作します。）</li>
@@ -144,7 +153,7 @@
   </div>
 
   <div class="help-section">
-    <h3>6. 困った時の対処法（Q&A）</h3>
+    <h3>7. 困った時の対処法（Q&A）</h3>
     <ul>
       <li><b>Q. 字幕が出ない:</b> 
         <ol>
