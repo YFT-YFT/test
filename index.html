@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SimultaneousInterpreter</title>
   <style>
+
+
+    /*ver.1.95-1    97行目くらいを編集*/
+
+
     :root { --main-fs: 75px; --sub-fs: 25px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
     body { display: flex; flex-direction: column; }
-    
     /* ヘッダー UI */
     .header { background: #1a1a1a; padding: 6px 12px; border-bottom: 2px solid #333; flex-shrink: 0; font-size: 11px; z-index: 100; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; }
     .group { background: #222; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
@@ -46,7 +50,12 @@
 
     /* フッター：バージョンとクレジット */
     .footer-info { position: fixed; bottom: 10px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; pointer-events: none; z-index: 200; }
-    .footer-text { font-size: 14px; color: #ffffff; font-weight: bold; text-shadow: 1px 1px 3px #000; }
+   .footer-text { 
+      font-size: clamp(2px, 1.0vw, 20px); /* (最小px,基本vw,最大px) という意味 */
+      color: #ffffff; 
+      font-weight: bold; 
+      text-shadow: 1px 1px 3px #000; 
+    }
 
     /* 説明書モーダル */
     #modal-help { display: none; position: fixed; top: 5%; left: 5%; width: 90%; height: 85%; background: #1a1a1a; border: 2px solid #555; padding: 25px; overflow-y: auto; z-index: 300; line-height: 1.6; border-radius: 12px; box-shadow: 0 0 50px #000; }
@@ -85,7 +94,7 @@
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.94</div>
+  <div class="footer-text">Ver.1.95</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
