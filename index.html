@@ -8,11 +8,76 @@
     :root { --main-fs: 75px; --sub-fs: 25px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
     body { display: flex; flex-direction: column; }
-    /* ヘッダー UI */
-    .header { background: #1a1a1a; padding: 6px 12px; border-bottom: 2px solid #333; flex-shrink: 0; font-size: 11px; z-index: 100; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; }
-    .group { background: #222; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
-    input, select { background: #333; color: #fff; border: 1px solid #555; padding: 2px; border-radius: 4px; font-size: 11px; }
-    
+/* ヘッダー UI：横スクロール対応版 */
+    .header { 
+      background: #1a1a1a; 
+      padding: 6px 10px; 
+      border-bottom: 2px solid #333; 
+      flex-shrink: 0; 
+      font-size: 11px; 
+      z-index: 100; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      flex-wrap: nowrap; /* 折り返さず横に並べる */
+      overflow-x: auto;  /* はみ出したら横スクロール可能に */
+      -webkit-overflow-scrolling: touch; 
+    }
+
+    /* スクロールバーを隠す（スッキリさせるため） */
+    .header::-webkit-scrollbar { display: none; }
+
+    .group { 
+      background: #222; 
+      padding: 3px 8px; 
+      border-radius: 4px; 
+      border: 1px solid #444; 
+      display: flex; 
+      gap: 6px; 
+      align-items: center; 
+      white-space: nowrap; 
+      flex-shrink: 0; /* 項目が潰れないように固定 */
+    }
+
+input, select { 
+      background: #333; 
+      color: #fff; 
+      border: 1px solid #555; 
+      padding: 1px 2px; /* 上下左右の余白を最小化 */
+      border-radius: 4px; 
+      font-size: 11px; 
+    }
+
+    /* 開始ボタン */
+    #btn-toggle { 
+      background: #0066ff; 
+      color: #fff; 
+      border: none; 
+      padding: 8px 5px; 
+      width: 85px;      
+      font-size: 10px;  
+      border-radius: 8px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      flex-shrink: 0;   
+    }
+
+    /* 使い方ボタン：幅と文字サイズをさらに縮小 */
+    #btn-help { 
+      background: #444; 
+      color: #fff; 
+      border: none; 
+      padding: 4px 6px; 
+      width: 50px;      /* 狭くしました */
+      font-size: 9px;   /* 小さくしました */
+      border-radius: 4px; 
+      cursor: pointer; 
+      flex-shrink: 0;
+    }
+
+    /* ログ名入力欄 */
+    #file-name { width: 55px; }
+      
     /* 表示メインエリア */
     #display-area { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; scroll-behavior: smooth; }
     
@@ -27,20 +92,24 @@
       font-size: 24px; 
       color: #ffffff; 
       font-style: normal; 
-      opacity: 0.7; 
+      opacity: 1.0; 
       word-wrap: break-word; 
       overflow-y: hidden;
       line-height: 1.5;
     }
-    
+
+/* 暫定エリア内のレイアウト */
+.interim-orig { font-size: 0.6em; color: #ccc; display: block; }
+.interim-trans { font-size: 1.0em; color: #fff; display: block; font-weight: bold; }
+      
     /* 確定ログ */
     #log-container { display: flex; flex-direction: column; gap: 30px; }
     .log-item { transition: opacity 0.5s; }
-    .orig-text { font-size: var(--sub-fs); color: #888; border-left: 5px solid #444; padding-left: 15px; margin-bottom: 8px; font-weight: 500; }
+    .orig-text { font-size: var(--sub-fs); color: #ccc; border-left: 5px solid #444; padding-left: 15px; margin-bottom: 8px; font-weight: 500; }
     .trans-text { font-weight: 900; line-height: 1.2; word-wrap: break-word; letter-spacing: -0.01em; font-size: var(--main-fs); }
     
     /* 過去ログの減衰 */
-    .log-item:not(:first-child) { opacity: 0.2; filter: grayscale(1); }
+    .log-item:not(:first-child) { opacity: 0.4; filter: none; }
     .log-item:not(:first-child) .trans-text { font-size: calc(var(--main-fs) * 0.5); }
 
     /* フッター：バージョンとクレジット */
@@ -65,18 +134,24 @@
 <body>
 
 <div class="header">
-  <button id="btn-toggle" style="background:#0066ff; color:#fff; border:none; padding:8px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">同時翻訳開始</button>
+  <button id="btn-toggle">同時翻訳開始</button>
+  
   <div class="group">
-  音声:<select id="sel-in"></select>
-  <button id="btn-swap" style="background:#444; color:#fff; border:none; padding:0 5px; border-radius:4px; cursor:pointer; font-size:14px; margin:0 2px;">⇄</button>
-  翻訳:<select id="sel-out"></select>
-</div>
+    音声:<select id="sel-in"></select>
+    <button id="btn-swap" style="background:#444; color:#fff; border:none; padding:0 5px; border-radius:4px; cursor:pointer; font-size:14px; margin:0 2px;">⇄</button>
+    翻訳:<select id="sel-out"></select>
+  </div>
+
   <div class="group">色:<input type="color" id="main-color" value="#ffff00"> 大:<input type="range" id="size-slider" min="40" max="150" value="75" style="width:50px"></div>
-  <div class="group">ログ名:<input type="text" id="file-name" placeholder="(空で保存無)" style="width:80px"> 日時:<select id="name-date-pos"><option value="none">無</option><option value="pre" selected>前</option><option value="post">後</option></select></div>
-  <div class="group">分割:<input type="number" id="split-sec" value="1.0" step="0.1" style="width:35px">秒 保存:<input type="number" id="auto-save-min" value="10" style="width:35px">分</div>
   
-  <button id="btn-help" style="background:#444; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">操作マニュアル</button>
+  <div class="group">ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 日時:<select id="name-date-pos"><option value="none">無</option><option value="pre" selected>前</option><option value="post">後</option></select></div>
   
+  <div class="group">分割:<input type="number" id="split-sec" value="1.0" step="0.1" style="width:35px">s 保存:<input type="number" id="auto-save-min" value="10" style="width:35px">m</div>
+  
+  <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
+  
+<button id="btn-help">使い方</button>
+    
   <div class="group">
     <div id="vol-meter"><div id="vol-bar"></div></div>
     <span id="status-dot" style="font-size:10px; color:#aaa; margin-left:5px;">READY</span>
@@ -89,7 +164,7 @@
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.95</div>
+  <div class="footer-text">Ver.1.97</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -200,11 +275,89 @@
     </ul>
   </div>
 
-  <button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">マニュアルを閉じる</button>
+<button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">マニュアルを閉じる</button>
 </div>
 
 <script>
-  const langData = [['日本語','ja-JP','ja'],['英語','en-US','en'],['中国語(簡体)','zh-CN','zh-CN'],['中国語(繁体)','zh-TW','zh-TW'],['中国語(広東)','zh-HK','zh-HK'],['韓国語','ko-KR','ko'],['ベトナム語','vi-VN','vi'],['タイ語','th-TH','th'],['フランス語','fr-FR','fr'],['スペイン語','es-ES','es'],['ドイツ語','de-DE','de'],['ロシア語','ru-RU','ru'],['イタリア語','it-IT','it'],['ポルトガル語','pt-PT','pt'],['インドネシア語','id-ID','id'],['フィリピン語','tl-PH','tl'],['ヒンディー語','hi-IN','hi'],['アラビア語','ar-SA','ar'],['トルコ語','tr-TR','tr'],['ポーランド語','pl-PL','pl'],['オランダ語','nl-NL','nl'],['スウェーデン語','sv-SE','sv'],['ギリシャ語','el-GR','el'],['ペルシャ語','fa-IR','fa'],['マレー語','ms-MY','ms'],['ビルマ語','my-MM','my'],['カンボジア語','km-KH','km'],['ラオス語','lo-LA','lo'],['ウクライナ語','uk-UA','uk']];
+  const langData = [
+  // --- 【最優先】日本での利用頻度・在留者数トップ層 ---
+  ['日本語','ja-JP','ja'],
+  ['英語','en-US','en'],
+  ['中国語(簡体)','zh-CN','zh-CN'],
+  ['中国語(繁体)','zh-TW','zh-TW'],
+  ['韓国語','ko-KR','ko'],
+  ['ベトナム語','vi-VN','vi'],
+  ['フィリピン語','tl-PH','tl'],
+  ['ブラジル・ポルトガル語','pt-BR','pt'],
+  ['ネパール語','ne-NP','ne'], // 日本での需要増に対応
+
+  // --- 【主要・近隣】よく使われる言語 ---
+  ['タイ語','th-TH','th'],
+  ['インドネシア語','id-ID','id'],
+  ['フランス語','fr-FR','fr'],
+  ['スペイン語','es-ES','es'],
+  ['ドイツ語','de-DE','de'],
+  ['ロシア語','ru-RU','ru'],
+  ['イタリア語','it-IT','it'],
+  ['マレー語','ms-MY','ms'],
+  ['ビルマ語','my-MM','my'],
+  ['カンボジア語','km-KH','km'],
+  ['ラオス語','lo-LA','lo'],
+  ['ヒンディー語','hi-IN','hi'],
+
+  // --- 【五十音順】その他の対応言語 ---
+  ['アイスランド語','is-IS','is'],
+  ['アフリカーンス語','af-ZA','af'],
+  ['アムハラ語','am-ET','am'],
+  ['アラビア語(UAE)','ar-AE','ar'],
+  ['アラビア語(サウジ)','ar-SA','ar'],
+  ['アラビア語(エジプト)','ar-EG','ar'],
+  ['アルバニア語','sq-AL','sq'],
+  ['アルメニア語','hy-AM','hy'],
+  ['アゼルバイジャン語','az-AZ','az'],
+  ['ウクライナ語','uk-UA','uk'],
+  ['ウズベク語','uz-UZ','uz'],
+  ['エストニア語','et-EE','et'],
+  ['オランダ語','nl-NL','nl'],
+  ['カザフ語','kk-KZ','kk'],
+  ['カタロニア語','ca-ES','ca'],
+  ['カンナダ語','kn-IN','kn'],
+  ['ギリシャ語','el-GR','el'],
+  ['グジャラート語','gu-IN','gu'],
+  ['クロアチア語','hr-HR','hr'],
+  ['ジョージア語','ka-GE','ka'],
+  ['シンハラ語','si-LK','si'],
+  ['スウェーデン語','sv-SE','sv'],
+  ['スペイン語(中南米)','es-419','es'],
+  ['スロバキア語','sk-SK','sk'],
+  ['スロベニア語','sl-SI','sl'],
+  ['スワヒリ語','sw-KE','sw'],
+  ['ズールー語','zu-ZA','zu'],
+  ['セルビア語','sr-RS','sr'],
+  ['タミル語','ta-IN','ta'],
+  ['チェコ語','cs-CZ','cs'],
+  ['テルグ語','te-IN','te'],
+  ['デンマーク語','da-DK','da'],
+  ['トルコ語','tr-TR','tr'],
+  ['ノルウェー語','nb-NO','no'],
+  ['バスク語','eu-ES','eu'],
+  ['ハンガリー語','hu-HU','hu'],
+  ['パンジャブ語','pa-IN','pa'],
+  ['フィンランド語','fi-FI','fi'],
+  ['ブルガリア語','bg-BG','bg'],
+  ['ヘブライ語','he-IL','he'],
+  ['ペルシャ語','fa-IR','fa'],
+  ['ベンガル語(インド)','bn-IN','bn'],
+  ['ポーランド語','pl-PL','pl'],
+  ['ポルトガル語(本国)','pt-PT','pt'],
+  ['マケドニア語','mk-MK','mk'],
+  ['マラヤーラム語','ml-IN','ml'],
+  ['マラーティー語','mr-IN','mr'],
+  ['モンゴル語','mn-MN','mn'],
+  ['ラトビア語','lv-LV','lv'],
+  ['リトアニア語','lt-LT','lt'],
+  ['ルーマニア語','ro-RO','ro']
+];
 
   const selIn = document.getElementById('sel-in'), selOut = document.getElementById('sel-out'), btnToggle = document.getElementById('btn-toggle'), logContainer = document.getElementById('log-container'), interimContainer = document.getElementById('interim-container'), mainColor = document.getElementById('main-color'), sizeSlider = document.getElementById('size-slider'), splitSecInput = document.getElementById('split-sec'), autoSaveInput = document.getElementById('auto-save-min'), fileNameInput = document.getElementById('file-name'), nameDatePos = document.getElementById('name-date-pos'), volBar = document.getElementById('vol-bar'), statusDot = document.getElementById('status-dot');
 
@@ -304,27 +457,37 @@ const btnSwap = document.getElementById('btn-swap');
     recognition.continuous = true;
     recognition.interimResults = true;
     
-    recognition.onresult = e => {
+recognition.onresult = async e => {
       lastSpeechTime = Date.now();
-      statusDot.textContent = "LIVE";
+      statusDot.textContent = "LIVE"; 
       statusDot.style.color = "red";
       
       let interimTranscript = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        let transcript = e.results[i][0].transcript;
-        if (e.results[i].isFinal) {
-          // 確定した瞬間に即時追加するロジックも組めますが、
-          // 現状の「無音検知で確定」ロジックと相性が良いのは累積表示です。
-        }
-        interimTranscript += transcript;
+        interimTranscript += e.results[i][0].transcript;
       }
       
-      if (interimTranscript.trim()) {
-        currentText = interimTranscript.trim();
+      const text = interimTranscript.trim();
+      if (!text) return;
+
+      currentText = text;
+      
+      const checkInterim = document.getElementById('check-interim-trans').checked;
+      
+      if (checkInterim) {
+        const tl = selOut.value;
+        try {
+          const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`);
+          const data = await res.json();
+          const trans = data[0].map(s => s[0]).join("");
+          interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans">${trans}</span>`;
+        } catch(e) { interimContainer.textContent = currentText; }
+      } else {
         interimContainer.textContent = "... " + currentText;
-        interimContainer.scrollTop = interimContainer.scrollHeight;
       }
+      interimContainer.scrollTop = interimContainer.scrollHeight;
     };
+      
 
     recognition.onend = () => { if (isListening) setTimeout(initRecognition, 200); };
     recognition.start();
@@ -411,34 +574,66 @@ function saveLogFile() {
       btnToggle.textContent = "同時翻訳開始"; btnToggle.style.background = "#0066ff";
     }
 };
-// 現在の入力（暫定テキスト）をリセットする関数
+
+// --- 暫定テキストの操作機能（Ver.1.95-6: 指の数で打ち分け版） ---
+
+// 【消去】現在の入力をリセット
 function resetInterim() {
   currentText = "";
   interimContainer.textContent = "";
-  
-  // 視覚的なフィードバック（一瞬だけ背景を白く光らせる）
-  interimContainer.style.background = "rgba(255,255,255,0.2)";
-  setTimeout(() => {
-    interimContainer.style.background = "transparent";
-  }, 100);
+  interimContainer.style.background = "rgba(255,255,255,0.2)"; // 白く光る
+  setTimeout(() => { interimContainer.style.background = "transparent"; }, 100);
+  if (isListening) restartRecognition();
+}
 
-  if (isListening) {
-    restartRecognition();
+// 【確定】現在の入力を即時ログへ
+function forceCommit() {
+  if (currentText.trim()) {
+    commitTranslation(currentText);
+    currentText = "";
+    interimContainer.textContent = "";
+    interimContainer.style.background = "rgba(0, 102, 255, 0.3)"; // 青く光る
+    setTimeout(() => { interimContainer.style.background = "transparent"; }, 100);
+    if (isListening) restartRecognition();
   }
 }
-// Escキーでリセット
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
+
+// --- スマホ・PC共通のイベント紐付け ---
+
+function handleInterimTouch(e) {
+  lastSpeechTime = Date.now(); // 暴発防止
+  const fingerCount = e.touches.length;
+  if (fingerCount === 1) {
+    forceCommit();
+  } else if (fingerCount >= 2) {
     resetInterim();
   }
+}
+
+// スマホ用タッチイベント
+interimContainer.addEventListener('touchstart', (e) => {
+  e.preventDefault(); 
+  handleInterimTouch(e);
+}, { passive: false });
+
+// PC用マウス・キーボードイベント
+interimContainer.onmousedown = (e) => {
+  lastSpeechTime = Date.now();
+  if (e.button === 0) forceCommit(); // 左クリック
+  else if (e.button === 2) resetInterim(); // 右クリック
+};
+interimContainer.oncontextmenu = (e) => e.preventDefault();
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') resetInterim();
+  if (e.key === 'Enter') forceCommit();
 });
 
-// 暫定ボックス（青枠）をクリックでリセット
-interimContainer.style.cursor = "pointer"; // カーソルを指マークに
-interimContainer.onclick = resetInterim;
-interimContainer.title = "クリックで入力をリセット";
+// ヒント表示
+interimContainer.style.cursor = "pointer";
+interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC】左クリック:確定 / 右クリック:消去";
 
-// マニュアル表示切り替え
+// --- マニュアル表示切り替え（ここから下は変更なし） ---
   const btnHelp = document.getElementById('btn-help');
   const modalHelp = document.getElementById('modal-help');
   btnHelp.onclick = () => {
@@ -446,7 +641,7 @@ interimContainer.title = "クリックで入力をリセット";
   };
 
 
-    /*ver.1.95-2    92行目くらいを編集*/
+    /*ver.1.97-2    92行目くらいを編集*/
 
 
     </script>
