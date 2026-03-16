@@ -135,6 +135,11 @@ input, select {
 
 <div class="header">
   <button id="btn-toggle">同時翻訳開始</button>
+
+  <div class="group">
+    <div id="vol-meter"><div id="vol-bar"></div></div>
+    <span id="status-dot" style="font-size:10px; color:#aaa; margin-left:5px;">READY</span>
+  </div>
   
   <div class="group">
     音声:<select id="sel-in"></select>
@@ -142,20 +147,28 @@ input, select {
     翻訳:<select id="sel-out"></select>
   </div>
 
-  <div class="group">色:<input type="color" id="main-color" value="#ffff00"> 大:<input type="range" id="size-slider" min="40" max="150" value="75" style="width:50px"></div>
-  
-  <div class="group">ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 日時:<select id="name-date-pos"><option value="none">無</option><option value="pre" selected>前</option><option value="post">後</option></select></div>
-  
-  <div class="group">分割:<input type="number" id="split-sec" value="1.0" step="0.1" min="0.1" style="width:35px">s 保存:<input type="number" id="auto-save-min" value="10" min="1" style="width:35px">m</div>
-  
   <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
-  
-<button id="btn-help">使い方</button>
-    
+
   <div class="group">
-    <div id="vol-meter"><div id="vol-bar"></div></div>
-    <span id="status-dot" style="font-size:10px; color:#aaa; margin-left:5px;">READY</span>
+    ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 
+    日時:<select id="name-date-pos">
+      <option value="none">無</option>
+      <option value="pre" selected>前</option>
+      <option value="post">後</option>
+    </select>
   </div>
+
+  <div class="group">
+    分割:<input type="number" id="split-sec" value="1.0" step="0.1" min="0.1" style="width:35px">s 
+    保存:<input type="number" id="auto-save-min" value="10" min="1" style="width:35px">m
+  </div>
+
+  <div class="group">
+    色:<input type="color" id="main-color" value="#ffff00"> 
+    大:<input type="range" id="size-slider" min="40" max="150" value="75" style="width:50px">
+  </div>
+  
+  <button id="btn-help">使い方</button>
 </div>
 
 <div id="display-area">
@@ -164,7 +177,7 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.97</div>
+  <div class="footer-text">Ver.1.98</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -658,7 +671,7 @@ interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC
   };
 
 
-    /*ver.1.97-４    92行目くらいを編集*/
+    /*ver.1.98-1    180行目くらいを編集*/
 
 
     </script>
