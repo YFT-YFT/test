@@ -146,7 +146,7 @@ input, select {
   
   <div class="group">ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 日時:<select id="name-date-pos"><option value="none">無</option><option value="pre" selected>前</option><option value="post">後</option></select></div>
   
-  <div class="group">分割:<input type="number" id="split-sec" value="1.0" step="0.1" style="width:35px">s 保存:<input type="number" id="auto-save-min" value="10" style="width:35px">m</div>
+  <div class="group">分割:<input type="number" id="split-sec" value="1.0" step="0.1" min="0.1" style="width:35px">s 保存:<input type="number" id="auto-save-min" value="10" min="1" style="width:35px">m</div>
   
   <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
   
@@ -410,13 +410,28 @@ const btnSwap = document.getElementById('btn-swap');
     });
   });
 
-  const saveSettings = () => {
-    localStorage.setItem("fontSize", sizeSlider.value); localStorage.setItem("fontColor", mainColor.value);
-    localStorage.setItem("langIn", selIn.value); localStorage.setItem("langOut", selOut.value);
-    localStorage.setItem("fName", fileNameInput.value); localStorage.setItem("splitS", splitSecInput.value);
+const saveSettings = () => {
+    // 【ガード】分割秒数が0.1未満なら1.0に強制リセット
+    let splitVal = parseFloat(splitSecInput.value);
+    if (isNaN(splitVal) || splitVal < 0.1) {
+        splitSecInput.value = "1.0";
+    }
+
+    // 【ガード】保存分数が1未満なら1に強制リセット
+    let autoSaveVal = parseInt(autoSaveInput.value);
+    if (isNaN(autoSaveVal) || autoSaveVal < 1) {
+        autoSaveInput.value = "1";
+    }
+
+    localStorage.setItem("fontSize", sizeSlider.value);
+    localStorage.setItem("fontColor", mainColor.value);
+    localStorage.setItem("langIn", selIn.value);
+    localStorage.setItem("langOut", selOut.value);
+    localStorage.setItem("fName", fileNameInput.value);
+    localStorage.setItem("splitS", splitSecInput.value);
     localStorage.setItem("autoS", autoSaveInput.value);
-  };
-  [sizeSlider, mainColor, selIn, selOut, fileNameInput, splitSecInput, autoSaveInput].forEach(el => el.onchange = saveSettings);
+};
+    [sizeSlider, mainColor, selIn, selOut, fileNameInput, splitSecInput, autoSaveInput].forEach(el => el.onchange = saveSettings);
   sizeSlider.oninput = () => updateSize(sizeSlider.value);
 
   async function startAudioMonitor() {
@@ -480,7 +495,8 @@ recognition.onresult = async e => {
           const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`);
           const data = await res.json();
           const trans = data[0].map(s => s[0]).join("");
-          interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans">${trans}</span>`;
+          // style="color:${mainColor.value}" を追加します
+interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
         } catch(e) { interimContainer.textContent = currentText; }
       } else {
         interimContainer.textContent = "... " + currentText;
@@ -641,7 +657,7 @@ interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC
   };
 
 
-    /*ver.1.97-2    92行目くらいを編集*/
+    /*ver.1.97-４    92行目くらいを編集*/
 
 
     </script>
