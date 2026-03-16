@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SimultaneousInterpreter</title>
+  <title>Simultaneous_Interpreter</title>
   <style>
     :root { --main-fs: 75px; --sub-fs: 25px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
@@ -169,7 +169,7 @@ input, select {
 </div>
 
 <div id="modal-help">
-  <h2>📖 SimultaneousInterpreter 操作マニュアル</h2>
+  <h2>📖 Simultaneous_Interpreter 使い方</h2>
   
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
@@ -177,6 +177,7 @@ input, select {
       <li><b>事前設定:</b> 上部バーで「音声（話す側）」と「翻訳（表示側）」を選択。デフォルトは日本語→中国語です。</li>
       <li><b>開始:</b> 青色の「同時翻訳開始」ボタンをクリックし、ブラウザのマイクの使用を許可してください。</li>
       <li><b>発話:</b> 画面に向かって話すと、上部の青枠（暫定ボックス）に文字が溜まり、無音を検知すると下部に確定ログとして出力されます。</li>
+        <li><b>暫定訳機能:</b> 「暫定訳」にチェックを入れると、確定前の青枠内でもリアルタイムに翻訳結果を表示します。</li>
       <li><b>終了・保存:</b> 「ログ名:」を入力している場合、「停止」ボタンを押すと、ログがテキストファイルとして自動保存されます。</li>
     </ul>
   </div>
@@ -185,8 +186,8 @@ input, select {
   <h3>2. 便利な操作・キャンセル機能</h3>
   <ul>
     <li><b>言語のクイック入れ替え:</b> 上部バーの「音声」と「翻訳」の間にある<b>「⇄」ボタン</b>を押すと、言語設定を瞬時に入れ替えることができます。双方向のやり取りに便利です。</li>
-    <li><b>発話のリセット（キャンセル）:</b> 言い間違えたり、認識が乱れたりした時は、確定（ログ出力）される前に<b>「Escキー」を押す</b>か、<b>上部の青枠（暫定ボックス）を直接クリック</b>してください。</li>
-    <li><b>リセットの効果:</b> 現在入力中の文字が消去され、ログにも残りません。リセット後はすぐに言い直すことができます（一瞬だけ背景が白く光ります）。</li>
+<li><b>発話の強制確定（即時ログ出力）:</b> 無音（分割秒数）を待たずに、現在の入力をすぐにログへ出力したい時は、上部の青枠（暫定ボックス）を<b>「左クリック」</b>、<b>「1本指でタップ」</b>、またはキーボードの<b>「Enterキー」</b>を押してください。</li>
+    <li><b>発話のリセット（キャンセル）:</b> 言い間違えたりした時は、確定前に上部の青枠を<b>「右クリック」</b>、<b>「2本指でタップ」</b>、または<b>「Escキー」</b>を押してください。</li>
   </ul>
 </div>
 
@@ -250,7 +251,7 @@ input, select {
 <div class="help-section">
     <h3>8. データの保存と連携</h3>
     <ul>
-      <li><b>ログの保存条件:</b> 上部バーの「ログ名」が入力されている時のみ、停止時または自動保存時にファイルが書き出されます。</li>
+      <li><b>ログの保存条件:</b> 上部バーの「ログ名」が入力されている時のみ保存されます。<b>※ログ名（ファイル名）に \ / : * ? " < > | は使用できません。</b></li>
       <li><b>【推奨】保存先ダイアログを非表示にする:</b>
         <br>自動保存をスムーズにするため、ブラウザの設定変更を推奨します。
         <ol>
@@ -275,7 +276,7 @@ input, select {
     </ul>
   </div>
 
-<button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">マニュアルを閉じる</button>
+<button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">使い方　を閉じる</button>
 </div>
 
 <script>
