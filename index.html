@@ -201,9 +201,9 @@ input, select {
       <li><b>言語のクイック入れ替え:</b> 上部バーの<b>「⇄」ボタン</b>を押すと、言語設定を瞬時に入れ替えることができます。双方向のやり取りに便利です。</li>
       <li><b>発話の強制確定（即時ログ出力）:</b> 無音（分割秒数）を待たずに、現在の入力をすぐにログへ出力したい時は、上部の青枠を<b>「左クリック」</b>、<b>「1本指でタップ」</b>、またはキーボードの<b>「Enterキー」</b>を押してください。</li>
       <li><b>発話のリセット（キャンセル）:</b> 言い間違えた時は、確定前に上部の青枠を<b>「右クリック」</b>、<b>「2本指でタップ」</b>、または<b>「Escキー」</b>を押してください。</li>
-      <li><b>音声読み上げ:</b> 確定ログの<b>「🔊」ボタン</b>を押すと、翻訳後の言語で読み上げます。
-        <br><small style="color: #ffaa00;">※読み上げの音質や可否はOS（iPhone/Android/Windows等）の標準エンジンに依存します。端末にその言語の音声データがない場合は音が出ません。</small>
-      </li>
+      <li><b>音声読み上げ:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>するか、横の「🔊」ボタンを押すと読み上げます。
+  <br><small style="color: #ffaa00;">※読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small>
+</li>
     </ul>
   </div>
 
@@ -250,7 +250,7 @@ input, select {
     <h3>7. 困った時の対処法（Q&A）</h3>
     <ul>
       <li><b>Q. 字幕が出ない:</b> マイク許可を確認し、ページを再読み込みしてください。Vivaldi等では動作しません。</li>
-      <li><b>Q. 🔊ボタンで音が出ない:</b> マナーモード解除、音量アップを確認してください。端末側にその言語の読み上げ用データが必要です。</li>
+      <li><b>Q. 音が出ない（読み上げない）:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>してみてください。それでも鳴らない場合は、マナーモードの解除、メディア音量のアップ、または端末の設定でその言語の読み上げデータがインストールされているか確認してください。</li>
       <li><b>Q. WATCHDOGと表示された:</b> 15秒間無音だったための接続リフレッシュです。そのまま発話を再開できます。</li>
       <li><b>Q. 文が細切れになる:</b> 上部バーの「分割」秒数を長め（1.5秒〜2.0秒等）に設定してください。</li>
     </ul>
@@ -539,15 +539,16 @@ interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><s
     }
     const row = document.createElement("div");
     row.className = "log-item";
-  row.innerHTML = `
-      <div class="orig-text">${text}</div>
-      <div class="trans-text" style="color:${mainColor.value}">
-        ${trans}
-        <button onclick="speakText('${trans.replace(/'/g, "\\'")}', '${tl}')" 
-                style="background:none; border:none; color:#aaa; cursor:pointer; font-size:0.5em; vertical-align:middle; margin-left:10px;">
-          🔊
-        </button>
-      </div>`;
+// commitTranslation関数内のrow.innerHTMLをこう書き換える
+row.innerHTML = `
+  <div class="orig-text">${text}</div>
+  <div class="trans-text" 
+       onclick="speakText('${trans.replace(/'/g, "\\'")}', '${tl}')" 
+       style="color:${mainColor.value}; cursor:pointer;" 
+       title="タップで読み上げ">
+    ${trans} 
+    <span style="font-size:0.5em; opacity:0.5; margin-left:5px;">🔊</span>
+  </div>`;
     logContainer.prepend(row);
     chatLog.push(`${getTimestamp()}\t${text}\t${trans}`);
     while (logContainer.children.length > 50) logContainer.lastChild.remove();
@@ -676,7 +677,7 @@ interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC
     window.speechSynthesis.speak(uttr);
   }
 
-    /*ver.1.98-3    180行目くらいを編集*/
+    /*ver.1.98-4    180行目くらいを編集*/
 
 
     </script>
