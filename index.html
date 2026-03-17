@@ -177,7 +177,7 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.98</div>
+  <div class="footer-text">Ver.1.99</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -202,7 +202,7 @@ input, select {
       <li><b>発話の強制確定（即時ログ出力）:</b> 無音（分割秒数）を待たずに、現在の入力をすぐにログへ出力したい時は、上部の青枠を<b>「左クリック」</b>、<b>「1本指でタップ」</b>、またはキーボードの<b>「Enterキー」</b>を押してください。</li>
       <li><b>発話のリセット（キャンセル）:</b> 言い間違えた時は、確定前に上部の青枠を<b>「右クリック」</b>、<b>「2本指でタップ」</b>、または<b>「Escキー」</b>を押してください。</li>
       <li><b>音声読み上げ:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>するか、横の「🔊」ボタンを押すと読み上げます。
-  <br><small style="color: #ffaa00;">※読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small>
+  <br><small style="color: #ffaa00;">※現在不安定な機能です。画面の更新で解消されることもあります。読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small>
 </li>
     </ul>
   </div>
@@ -663,21 +663,25 @@ interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC
     modalHelp.style.display = (modalHelp.style.display === 'block') ? 'none' : 'block';
   };
 // 手動読み上げ用関数
-  function speakText(text, lang) {
-    // ブラウザの読み上げ機能をリセット
+function speakText(text, lang) {
+    // 1. まず現在の再生をキャンセル
     window.speechSynthesis.cancel();
-    
-    const uttr = new SpeechSynthesisUtterance();
-    uttr.text = text;
-    uttr.lang = lang; // 翻訳先言語のコード（zh-CN, en, jaなど）を適用
-    uttr.rate = 1.0;  // 速度 (0.1〜10)
-    uttr.pitch = 1.0; // ピッチ (0〜2)
-    // ↓この1行を足すと、見つからない時に黙り込む確率が減ります
-    uttr.onerror = (e) => console.log("Speech error:", e);
-    window.speechSynthesis.speak(uttr);
-  }
 
-    /*ver.1.98-stable    180行目くらいを編集*/
+    // 2. Chromebook(ChromeOS)の処理待ちのため、0.1秒(100ms)の間をあける
+    setTimeout(() => {
+        const uttr = new SpeechSynthesisUtterance();
+        uttr.text = text;
+        uttr.lang = lang;
+        uttr.rate = 1.0;
+        uttr.pitch = 1.0;
+
+        // 3. 【おまじない】Chromebookで稀に起きる「途中で止まる」バグを防ぐ
+        uttr.onend = () => { /* 終了時の処理が必要ならここに */ };
+
+        window.speechSynthesis.speak(uttr);
+    }, 100); 
+}
+    /*ver.1.99-1    180行目くらいを編集*/
 
 
     </script>
