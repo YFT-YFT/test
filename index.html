@@ -504,7 +504,17 @@ interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><s
     };
       
 
-    recognition.onend = () => { if (isListening) setTimeout(initRecognition, 200); };
+    recognition.onend = () => { 
+  if (isListening) {
+    // 予期せず切れた時だけ再起動するようにし、
+    // resetInterimなどからの再起動とぶつからないようにする
+    setTimeout(() => {
+      if (isListening && statusDot.textContent !== "LIVE") {
+        initRecognition();
+      }
+    }, 200);
+  }
+};
     recognition.start();
     startAudioMonitor();
   }
@@ -605,11 +615,21 @@ function saveLogFile() {
 function resetInterim() {
   currentText = "";
   interimContainer.textContent = "";
-  interimContainer.style.background = "rgba(255,255,255,0.2)"; // 白く光る
+  interimContainer.style.background = "rgba(255,255,255,0.2)";
   setTimeout(() => { interimContainer.style.background = "transparent"; }, 100);
-  if (isListening) restartRecognition();
-}
 
+  if (isListening) {
+    // 強制的に一度ストップさせ、確実に再起動をかける
+    if (recognition) {
+      recognition.onend = null; // 自動再起動ループを一時的に切る
+      try { recognition.stop(); } catch(e) {}
+    }
+    // 200msほど待ってから再起動（ブラウザの解放待ち）
+    setTimeout(() => {
+      if (isListening) initRecognition();
+    }, 200);
+  }
+}
 // 【確定】現在の入力を即時ログへ
 function forceCommit() {
   if (currentText.trim()) {
@@ -682,7 +702,7 @@ function speakText(text, lang) {
         window.speechSynthesis.speak(uttr);
     }, 100); 
 }
-    /*ver.1.99-1    180行目くらいを編集*/
+    /*ver.1.99-2    180行目くらいを編集*/
 
 
     </script>
