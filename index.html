@@ -643,14 +643,27 @@ function forceCommit() {
 }
 
 // --- スマホ・PC共通のイベント紐付け ---
-
+let touchTimer = null; // 指の数判定用のタイマー
 function handleInterimTouch(e) {
-  lastSpeechTime = Date.now(); // 暴発防止
+  if (e.cancelable) e.preventDefault();
+  lastSpeechTime = Date.now();
+  
   const fingerCount = e.touches.length;
-  if (fingerCount === 1) {
-    forceCommit();
-  } else if (fingerCount >= 2) {
+
+  // すでに動いているタイマーがあれば止める（二重動作防止）
+  if (touchTimer) clearTimeout(touchTimer);
+
+  if (fingerCount >= 2) {
+    // 2本以上の場合は、即座にリセット（白く光る）
     resetInterim();
+  } else if (fingerCount === 1) {
+    // 1本の場合は、0.06秒だけ「2本目が来ないか」待ってから確定（青く光る）
+    touchTimer = setTimeout(() => {
+      if (isListening && currentText.trim()) {
+        forceCommit();
+      }
+      touchTimer = null;
+    }, 60); 
   }
 }
 
@@ -702,7 +715,7 @@ function speakText(text, lang) {
         window.speechSynthesis.speak(uttr);
     }, 100); 
 }
-    /*ver.1.99-2    180行目くらいを編集*/
+    /*ver.1.99-3    180行目くらいを編集*/
 
 
     </script>
