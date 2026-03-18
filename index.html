@@ -5,36 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simultaneous_Interpreter</title>
   <style>
-    :root { --main-fs: 75px; --sub-fs: 25px; }
+    :root { --main-fs: 75px; --sub-fs: 30px; }
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
     body { display: flex; flex-direction: column; }
 /* ヘッダー UI：横スクロール対応版 */
-/* ヘッダー UI：スクロールの気づきを最大化 */
-.header {
-  background: #1a1a1a;
-  padding: 6px 10px;
-  border-bottom: 2px solid #333;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  position: relative;
-  /* 右端を少し薄くして「続き」を予感させる */
-  mask-image: linear-gradient(to right, black 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
-}
+    .header { 
+      background: #1a1a1a; 
+      padding: 6px 10px; 
+      border-bottom: 2px solid #333; 
+      flex-shrink: 0; 
+      font-size: 11px; 
+      z-index: 100; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      flex-wrap: nowrap; /* 折り返さず横に並べる */
+      overflow-x: auto;  /* はみ出したら横スクロール可能に */
+      -webkit-overflow-scrolling: touch; 
+    }
 
-/* スクロールバーをあえて細く表示（道しるべ） */
-.header::-webkit-scrollbar {
-  display: block;
-  height: 3px;
-}
-.header::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-}
+    /* スクロールバーを隠す（スッキリさせるため） */
+    .header::-webkit-scrollbar { display: none; }
 
     .group { 
       background: #222; 
@@ -71,32 +62,37 @@ input, select {
       flex-shrink: 0;   
     }
 
-/* 操作方法ボタン：右端固定 ＆ 目立つデザイン */
-#btn-help { 
-  background: #ff00ea; /* 目立つオレンジ色（お好みで #0066ff などに） */
-  color: #fff; 
-  border: none; 
-  padding: 5px 8px; 
-  width: auto;         /* 文字数に合わせて自動調整 */
-  min-width: 60px;     /* 最低限の幅を確保 */
-  font-size: 10px; 
-  font-weight: bold;
-  border-radius: 4px; 
-  cursor: pointer; 
-  flex-shrink: 0;
+/* 使い方ボタン：右端固定・影・アニメーション */
+/* 使い方ボタン：最強の右端固定設定 */
+    #btn-help { 
+      background: linear-gradient(135deg, #ff33ff 0%, #cc00cc 100%) !important;
+      color: #fff !important; /* 文字は白の方が見やすいかもしれません */
+      position: sticky !important;
+      right: 0 !important; 
+      margin-left: auto !important; 
+      z-index: 100;
+      min-width: 65px !important;
+      height: 32px !important;
+      font-size: 11px !important;
+      font-weight: bold;
+      border: 1px solid #fff !important;
+      border-radius: 4px;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      /* 強調された影効果 */
+     box-shadow: -15px 0 25px rgba(0, 0, 0, 0.9), -5px 0 10px rgba(0, 0, 0, 1) !important;
+    }
 
-  /* --- Sticky（固定）設定 --- */
-  position: sticky;
-  right: 0;
-  z-index: 10;
-  margin-left: 15px; /* 左側との余白 */
-  
-  /* --- 目立たせる装飾 --- */
-  box-shadow: -8px 0 15px rgba(0, 0, 0, 0.8), 0 0 5px rgba(255, 140, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.2); /* 少し光沢感を出す */
-}
-
-/* ボタンの中身を「操作方法」にする場合、HTML側も修正してください */
+    /* ぷるぷるアニメーション（拡大率を少し控えめに調整） */
+    @keyframes pulu {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+    .pulu-pulu { animation: pulu 0.4s ease-in-out; }
 
     /* ログ名入力欄 */
     #file-name { width: 55px; }
@@ -152,41 +148,6 @@ input, select {
     /* メーター */
     #vol-meter { width: 40px; height: 10px; background: #333; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; border: 1px solid #555; }
     #vol-bar { width: 0%; height: 100%; background: #00ff00; }
-    
-/* --- ヘッダー要素の一括スリム化（長体）設定 --- */
-.header .group, 
-.header button, 
-.header select, 
-.header input {
-  font-size: 11px; 
-  font-weight: bold;
-  /* 横幅を85%に凝縮 */
-  display: inline-flex;
-  transform: scaleX(0.85);
-  transform-origin: left;
-  /* 縮めた分の余白調整（項目が離れすぎないようにする） */
-  margin-right: -4px; 
-}
-
-/* 「操作方法」ボタンだけは、右端固定なので右端を起点に縮める */
-#btn-help {
-  background: #ff8c00 !important;
-  position: sticky !important;
-  right: 0 !important;
-  z-index: 10 !important;
-  transform: scaleX(0.85) !important;
-  transform-origin: right !important;
-  margin-left: 10px !important;
-  margin-right: 0 !important;
-  box-shadow: -12px 0 15px #1a1a1a !important;
-}
-
-/* スクリューバーの高さが長体で崩れないよう固定 */
-.header::-webkit-scrollbar {
-  display: block;
-  height: 3px;
-}
-    
   </style>
 </head>
 <body>
@@ -223,10 +184,10 @@ input, select {
 
   <div class="group">
     色:<input type="color" id="main-color" value="#ffff00"> 
-    大:<input type="range" id="size-slider" min="40" max="150" value="75" style="width:50px">
+    大:<input type="range" id="size-slider" min="10" max="250" value="75" style="width:90px">
   </div>
   
-  <button id="btn-help">操作方法</button>
+  <button id="btn-help">使い方</button>
 </div>
 
 <div id="display-area">
@@ -235,12 +196,12 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.991</div>
+  <div class="footer-text">Ver.1.993</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
 <div id="modal-help">
-  <h2>📖 Simultaneous_Interpreter 操作方法</h2>
+  <h2>📖 Simultaneous_Interpreter 使い方</h2>
   
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
@@ -332,7 +293,7 @@ input, select {
     </ul>
   </div>
 
-  <button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">操作方法　を閉じる</button>
+  <button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">使い方　を閉じる</button>
 </div>
 
 <script>
@@ -447,7 +408,17 @@ const btnSwap = document.getElementById('btn-swap');
 
   langData.forEach(l => { selIn.innerHTML += `<option value="${l[1]}">${l[0]}</option>`; selOut.innerHTML += `<option value="${l[2]}">${l[0]}</option>`; });
 
-  function updateSize(v) { document.documentElement.style.setProperty('--main-fs', v + 'px'); document.documentElement.style.setProperty('--sub-fs', Math.max(16, v * 0.35) + 'px'); }
+function updateSize(v) { 
+  // v はスライダーの値（10〜250）
+  document.documentElement.style.setProperty('--main-fs', v + 'px'); 
+
+  // 原文（サブ）の計算
+  // メインの 40% (0.4) に設定し、かつ最小でも 8px は確保する設定です。
+  // これならメインが 10px のとき、サブは自動的に 8px 前後になり、逆転しません。
+  let subSize = Math.max(8, v * 0.4); 
+  
+  document.documentElement.style.setProperty('--sub-fs', subSize + 'px'); 
+}
   
   window.addEventListener("load", () => {
     ["fontSize", "fontColor", "langIn", "langOut", "fName", "splitS", "autoS"].forEach(k => {
@@ -774,31 +745,34 @@ function speakText(text, lang) {
     }, 100); 
 }
 
-// 【UX改善】初回起動時にヘッダーを少し揺らしてスクロールを促す
+// --- 起動時の演出：高速スライド ＆ 即ぷるぷる ---
 window.addEventListener('load', () => {
   const header = document.querySelector('.header');
-  // スクロールが必要な画面幅の時だけ実行
-  if (header.scrollWidth > header.clientWidth) {
-    setTimeout(() => {
-      // 300pxだけ右にスライドして、400msかけて戻る（控えめかつ確実な動き）
-      header.scrollTo({ left: 300, behavior: 'smooth' });
+  const btnHelp = document.getElementById('btn-help');
+
+  // 【演出1】0.3秒後に、大きく3000pxスライドして0.25秒で戻る
+  setTimeout(() => {
+    if (header.scrollWidth > header.clientWidth) {
+      header.scrollTo({ left: 3000, behavior: 'smooth' });
+      
+      // 往復の「戻り」を早める（スライド開始から250ms後）
       setTimeout(() => {
         header.scrollTo({ left: 0, behavior: 'smooth' });
-      }, 400);
-    }, 800); // 起動の0.8秒後に実行
-  }
+      }, 200);
+    }
+  }, 100); // 起動直後のモタつきが消えた頃に開始
+
+  // 【演出2】スライドが戻りきる直前（0.8秒後）に「ぷるぷる」を開始
+  setTimeout(() => {
+    if (btnHelp) {
+      btnHelp.classList.add('pulu-pulu');
+      setTimeout(() => btnHelp.classList.remove('pulu-pulu'), 400);
+    }
+  }, 500); 
 });
 
-// 起動時に「操作方法」ボタンを1回だけ揺らしてアピール
-setTimeout(() => {
-  const helpBtn = document.getElementById('btn-help');
-  helpBtn.style.transition = "transform 0.2s ease-in-out";
-  helpBtn.style.transform = "scale(1.2)";
-  setTimeout(() => { helpBtn.style.transform = "scale(1.0)"; }, 200);
-}, 1500); // ヘッダーのスクロールデモが終わった後に実行
 
-
-    /*ver.1.991-2    180行目くらいを編集*/
+    /*ver.1.993-2    180行目くらいを編集*/
 
 
     </script>
