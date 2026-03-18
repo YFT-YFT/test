@@ -130,8 +130,13 @@ input, select {
     /* 確定ログ */
     #log-container { display: flex; flex-direction: column; gap: 30px; }
     .log-item { transition: opacity 0.5s; }
-    .orig-text { font-size: var(--sub-fs); color: #ccc; border-left: 5px solid #444; padding-left: 15px; margin-bottom: 8px; font-weight: 500; }
+    /* 確定ログの三段構成 */
+    .orig-text { font-size: var(--sub-fs); color: #ccc; border-left: 5px solid #444; padding-left: 15px; margin-bottom: 4px; font-weight: 500; }
+    
     .trans-text { font-weight: 900; line-height: 1.2; word-wrap: break-word; letter-spacing: -0.01em; font-size: var(--main-fs); }
+    
+    /* 逆翻訳文：少し小さめの淡い緑色 */
+    .re-trans-text { font-size: calc(var(--sub-fs) * 0.9); color: #90ee90; opacity: 0.8; margin-top: 6px; padding-left: 15px; font-style: italic; }
     
     /* 過去ログの減衰 */
     .log-item:not(:first-child) { opacity: 0.4; filter: none; }
@@ -173,6 +178,7 @@ input, select {
   </div>
 
   <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
+  <div class="group">逆翻訳:<input type="checkbox" id="check-re-trans"></div>
 
   <div class="group">
     ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 
@@ -202,7 +208,7 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.993</div>
+  <div class="footer-text">Ver.2.0</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -212,7 +218,8 @@ input, select {
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
     <ul>
-      <li><b>事前設定:</b> 上部バーで「音声（話す側）」と「翻訳（表示側）」を選択。デフォルトは日本語→中国語です。</li>
+      <li><b>設定メニュー:</b> 上部バーを横にスクロールすることですべての設定メニューが表示されます。</li>
+      <li><b>事前設定:</b> 上部バーで「音声（話す側）」と「翻訳（表示側）」を選択。デフォルトは日本語→中国語(簡体)です。</li>
       <li><b>開始:</b> 青色の「同時翻訳開始」ボタンをクリックし、ブラウザのマイクの使用を許可してください。</li>
       <li><b>発話:</b> 画面に向かって話すと、上部の青枠（暫定ボックス）に文字が溜まり、無音を検知すると下部に確定ログとして出力されます。</li>
       <li><b>暫定訳機能:</b> 「暫定訳」にチェックを入れると、確定前の青枠内でもリアルタイムに翻訳結果を表示します。</li>
@@ -224,11 +231,15 @@ input, select {
     <h3>2. 便利な操作・キャンセル機能</h3>
     <ul>
       <li><b>言語のクイック入れ替え:</b> 上部バーの<b>「⇄」ボタン</b>を押すと、言語設定を瞬時に入れ替えることができます。双方向のやり取りに便利です。</li>
+      <li><b>逆翻訳による精度確認:</b> 「逆翻訳」にチェックを入れると、翻訳結果をさらに自分の言語へ訳し戻して表示します。戻ってきた文が不自然な場合は、言い方を変えて再度発話することで、誤解を防ぐことができます。</li>
+      <li><b>スライダーによる動的調整:</b> 「大」スライダーを動かすと、メイン翻訳だけでなく<b>上部の原文サイズも自動で最適化</b>（メインの40%）され、常にバランス良く表示されます。</li>
+      <li><b>リアルタイム配色:</b> 「色」を変更すると、確定済みのログだけでなく、現在入力中の<b>「暫定訳」の色も即座に反映</b>されます。</li>
       <li><b>発話の強制確定（即時ログ出力）:</b> 無音（分割秒数）を待たずに、現在の入力をすぐにログへ出力したい時は、上部の青枠を<b>「左クリック」</b>、<b>「1本指でタップ」</b>、またはキーボードの<b>「Enterキー」</b>を押してください。</li>
       <li><b>発話のリセット（キャンセル）:</b> 言い間違えた時は、確定前に上部の青枠を<b>「右クリック」</b>、<b>「2本指でタップ」</b>、または<b>「Escキー」</b>を押してください。</li>
       <li><b>音声読み上げ:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>するか、横の「🔊」ボタンを押すと読み上げます。
   <br><small style="color: #ffaa00;">※読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small>
 </li>
+<li><b>割り込み再生:</b> 読み上げ中に別のログをタップすると、前の再生を中断して<b>新しい文章をすぐに読み上げ</b>ます。</li>
     </ul>
   </div>
 
@@ -289,7 +300,8 @@ input, select {
       <li><b>【推奨】保存ダイアログを非表示にする:</b> ブラウザの設定で「ダウンロード前に各ファイルの保存場所を確認する」を<b>オフ</b>にすると、フォルダへ直通で保存されスムーズです。</li>
       <li><b>Excel連携:</b> 保存されたファイルをメモ帳で開き、<b>中身を全選択（Ctrl+A）してコピーし、ExcelのA1セルに貼り付けてください。</b>時間・原文・翻訳が綺麗に整列します。</li>
       <li><b>自動バックアップ:</b> 設定した分数ごとにその時点の内容を自動保存します。</li>
-    </ul>
+     <li><b>重複保存の仕様:</b> 「停止」ボタンを押した際にも最終ログが保存されます。自動保存とタイミングが重なり、同じ内容のファイルが2つ作成されることがありますが、これはデータ保護のための仕様です。</li>
+     </ul>
   </div>
 
   <div class="help-section">
@@ -572,59 +584,93 @@ interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><s
     }, 100);
   }
 
-  async function commitTranslation(text) {
+async function commitTranslation(text) {
     if(!text) return;
-    const tl = selOut.value;
+    const langInFull = selIn.value; // 例: "ja-JP"
+    const sl = langInFull.split('-')[0]; // "ja"
+    const tl = selOut.value; // 翻訳先言語コード
+    const isReTransOn = document.getElementById('check-re-trans').checked;
+
     let trans = text;
-    if (!selIn.value.startsWith(tl)) {
+    let reTrans = "";
+
+    // 1. メイン翻訳の実行（言語が違う場合のみ）
+    if (sl !== tl) {
       try {
         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`);
         const data = await res.json();
         trans = data[0].map(s => s[0]).join("");
-      } catch(e) { trans = "[Error]"; }
+      } catch(e) { trans = "[Translation Error]"; }
     }
+
+    // 2. 逆翻訳の実行（スイッチON かつ 言語が違う場合のみ）
+    if (isReTransOn && sl !== tl) {
+      try {
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${sl}&dt=t&q=${encodeURIComponent(trans)}`);
+        const data = await res.json();
+        reTrans = data[0].map(s => s[0]).join("");
+      } catch(e) { reTrans = "[Re-translation Error]"; }
+    }
+
+    // 3. ログアイテムの表示作成
     const row = document.createElement("div");
     row.className = "log-item";
-// commitTranslation関数内のrow.innerHTMLをこう書き換える
-row.innerHTML = `
-  <div class="orig-text">${text}</div>
-  <div class="trans-text" 
-       onclick="speakText('${trans.replace(/'/g, "\\'")}', '${tl}')" 
-       style="color:${mainColor.value}; cursor:pointer;" 
-       title="タップで読み上げ">
-    ${trans} 
-    <span style="font-size:0.5em; opacity:0.5; margin-left:5px;">🔊</span>
-  </div>`;
+    const reTransHtml = reTrans ? `<div class="re-trans-text">↩️ ${reTrans}</div>` : "";
+
+    row.innerHTML = `
+      <div class="orig-text">${text}</div>
+      <div class="trans-text" 
+           onclick="speakText('${trans.replace(/'/g, "\\'")}', '${tl}')" 
+           style="color:${mainColor.value}; cursor:pointer;" 
+           title="タップで読み上げ">
+        ${trans} <span style="font-size:0.5em; opacity:0.5; margin-left:5px;">🔊</span>
+      </div>
+      ${reTransHtml}`;
+
     logContainer.prepend(row);
-    chatLog.push(`${getTimestamp()}\t${text}\t${trans}`);
+    
+    // 4. 重要：Excel用のデータ作成（タブ区切りで4列分を保存）
+    // 日時 \t 原文 \t 翻訳文 \t 逆翻訳文
+// 4. 重要：Excel用のデータ作成（絵文字 ↩️ を除外して保存）
+    chatLog.push(`${getTimestamp()}\t${text}\t${trans}\t${reTrans || ""}`);    
     while (logContainer.children.length > 50) logContainer.lastChild.remove();
   }
-
-  function getTimestamp() {
+function getTimestamp() {
     const n = new Date();
     const f = (v) => v.toString().padStart(2, '0');
-    return n.getFullYear().toString().slice(-2) + f(n.getMonth()+1) + f(n.getDate()) + "_" + f(n.getHours()) + f(n.getMinutes()) + f(n.getSeconds());
+    // 形式を "2026/03/19 12:00:59" に変更
+    return n.getFullYear() + "/" + f(n.getMonth() + 1) + "/" + f(n.getDate()) + " " + 
+           f(n.getHours()) + ":" + f(n.getMinutes()) + ":" + f(n.getSeconds());
   }
 
 function saveLogFile() {
     if (chatLog.length === 0 || !fileNameInput.value.trim()) return;
     const ts = getTimestamp();
+    // ファイル名用に記号を除去した文字列を作る (例: 260319_120059)
+    const tsForFile = ts.replace(/\//g, '').replace(/:/g, '').replace(' ', '_').slice(2);
+    
     let fname = fileNameInput.value.trim();
-    if(nameDatePos.value === 'pre') fname = ts + "_" + fname;
-    if(nameDatePos.value === 'post') fname = fname + "_" + ts;
+    if(nameDatePos.value === 'pre') fname = tsForFile + "_" + fname;
+    if(nameDatePos.value === 'post') fname = fname + "_" + tsForFile;
 
-    // 各項目をダブルクォーテーションで囲み、中の " を "" にエスケープする
+    // ...以下、BOM付きUTF-8保存の処理へ続く
+    // Excelで「A列:日時 B列:原文 C列:翻訳 D列:逆翻訳」にするための書き出し処理
     const escapeVal = (v) => `"${String(v).replace(/"/g, '""')}"`;
     const content = chatLog.map(line => {
-      const [time, orig, trans] = line.split('\t');
-      return `${escapeVal(time)}\t${escapeVal(orig)}\t${escapeVal(trans)}`;
-    }).join("\r\n"); // WindowsのExcel親和性を高めるため CRLF 改行
+      const parts = line.split('\t'); // [日時, 原文, 翻訳文, 逆翻訳文]
+      return parts.map(p => escapeVal(p)).join('\t');
+    }).join("\r\n");
     
+    // BOM付きUTF-8で保存（Excelの文字化け防止）
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-    const blob = new Blob([bom, content], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([bom, content], { type: "text/plain" });
+
+    const a = document.createElement("a"); 
+    a.href = URL.createObjectURL(blob); 
+    a.download = fname + ".txt"; 
+    a.click();
     
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname + ".txt"; a.click();
-    chatLog = [];
+    chatLog = []; // 保存したらログをリセット
   }
 
   btnToggle.onclick = () => {
@@ -731,6 +777,9 @@ interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC
   btnHelp.onclick = () => {
     modalHelp.style.display = (modalHelp.style.display === 'block') ? 'none' : 'block';
   };
+  
+  // 読み上げのインスタンスが消されないように、関数の外で保持する
+let currentUtterance = null;
 // 手動読み上げ用関数
 function speakText(text, lang) {
     // 1. まず現在の再生をキャンセル
@@ -743,9 +792,10 @@ function speakText(text, lang) {
         uttr.lang = lang;
         uttr.rate = 1.0;
         uttr.pitch = 1.0;
-
-        // 3. 【おまじない】Chromebookで稀に起きる「途中で止まる」バグを防ぐ
-        uttr.onend = () => { /* 終了時の処理が必要ならここに */ };
+    // iOS/Safari対策: currentUtteranceに代入してメモリ解放を防ぐ
+        currentUtterance = uttr; 
+    // 3. 【おまじない】Chromebookで稀に起きる「途中で止まる」バグを防ぐ
+        uttr.onend = () => { currentUtterance = null; };
 
         window.speechSynthesis.speak(uttr);
     }, 100); 
@@ -756,10 +806,10 @@ window.addEventListener('load', () => {
   const header = document.querySelector('.header');
   const btnHelp = document.getElementById('btn-help');
 
-  // 【演出1】0.3秒後に、大きく3000pxスライドして0.25秒で戻る
+  // 【演出1】0.3秒後に、大きく200pxスライドして0.25秒で戻る
   setTimeout(() => {
     if (header.scrollWidth > header.clientWidth) {
-      header.scrollTo({ left: 3000, behavior: 'smooth' });
+      header.scrollTo({ left: 200, behavior: 'smooth' });
       
       // 往復の「戻り」を早める（スライド開始から250ms後）
       setTimeout(() => {
@@ -778,7 +828,7 @@ window.addEventListener('load', () => {
 });
 
 
-    /*ver.1.993-3    180行目くらいを編集*/
+    /*ver.2.0-1    211行目くらいを編集*/
 
 
     </script>
