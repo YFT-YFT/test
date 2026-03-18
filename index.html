@@ -71,18 +71,32 @@ input, select {
       flex-shrink: 0;   
     }
 
-    /* 使い方ボタン：幅と文字サイズをさらに縮小 */
-    #btn-help { 
-      background: #444; 
-      color: #fff; 
-      border: none; 
-      padding: 4px 6px; 
-      width: 50px;      /* 狭くしました */
-      font-size: 9px;   /* 小さくしました */
-      border-radius: 4px; 
-      cursor: pointer; 
-      flex-shrink: 0;
-    }
+/* 操作方法ボタン：右端固定 ＆ 目立つデザイン */
+#btn-help { 
+  background: #ff00ea; /* 目立つオレンジ色（お好みで #0066ff などに） */
+  color: #fff; 
+  border: none; 
+  padding: 5px 8px; 
+  width: auto;         /* 文字数に合わせて自動調整 */
+  min-width: 60px;     /* 最低限の幅を確保 */
+  font-size: 10px; 
+  font-weight: bold;
+  border-radius: 4px; 
+  cursor: pointer; 
+  flex-shrink: 0;
+
+  /* --- Sticky（固定）設定 --- */
+  position: sticky;
+  right: 0;
+  z-index: 10;
+  margin-left: 15px; /* 左側との余白 */
+  
+  /* --- 目立たせる装飾 --- */
+  box-shadow: -8px 0 15px rgba(0, 0, 0, 0.8), 0 0 5px rgba(255, 140, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2); /* 少し光沢感を出す */
+}
+
+/* ボタンの中身を「操作方法」にする場合、HTML側も修正してください */
 
     /* ログ名入力欄 */
     #file-name { width: 55px; }
@@ -138,6 +152,41 @@ input, select {
     /* メーター */
     #vol-meter { width: 40px; height: 10px; background: #333; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; border: 1px solid #555; }
     #vol-bar { width: 0%; height: 100%; background: #00ff00; }
+    
+/* --- ヘッダー要素の一括スリム化（長体）設定 --- */
+.header .group, 
+.header button, 
+.header select, 
+.header input {
+  font-size: 11px; 
+  font-weight: bold;
+  /* 横幅を85%に凝縮 */
+  display: inline-flex;
+  transform: scaleX(0.85);
+  transform-origin: left;
+  /* 縮めた分の余白調整（項目が離れすぎないようにする） */
+  margin-right: -4px; 
+}
+
+/* 「操作方法」ボタンだけは、右端固定なので右端を起点に縮める */
+#btn-help {
+  background: #ff8c00 !important;
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  transform: scaleX(0.85) !important;
+  transform-origin: right !important;
+  margin-left: 10px !important;
+  margin-right: 0 !important;
+  box-shadow: -12px 0 15px #1a1a1a !important;
+}
+
+/* スクリューバーの高さが長体で崩れないよう固定 */
+.header::-webkit-scrollbar {
+  display: block;
+  height: 3px;
+}
+    
   </style>
 </head>
 <body>
@@ -177,7 +226,7 @@ input, select {
     大:<input type="range" id="size-slider" min="40" max="150" value="75" style="width:50px">
   </div>
   
-  <button id="btn-help">使い方</button>
+  <button id="btn-help">操作方法</button>
 </div>
 
 <div id="display-area">
@@ -191,7 +240,7 @@ input, select {
 </div>
 
 <div id="modal-help">
-  <h2>📖 Simultaneous_Interpreter 使い方</h2>
+  <h2>📖 Simultaneous_Interpreter 操作方法</h2>
   
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
@@ -283,7 +332,7 @@ input, select {
     </ul>
   </div>
 
-  <button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">使い方　を閉じる</button>
+  <button id="btn-close-help" onclick="document.getElementById('modal-help').style.display='none'">操作方法　を閉じる</button>
 </div>
 
 <script>
@@ -739,7 +788,17 @@ window.addEventListener('load', () => {
     }, 800); // 起動の0.8秒後に実行
   }
 });
-    /*ver.1.991-1    180行目くらいを編集*/
+
+// 起動時に「操作方法」ボタンを1回だけ揺らしてアピール
+setTimeout(() => {
+  const helpBtn = document.getElementById('btn-help');
+  helpBtn.style.transition = "transform 0.2s ease-in-out";
+  helpBtn.style.transform = "scale(1.2)";
+  setTimeout(() => { helpBtn.style.transform = "scale(1.0)"; }, 200);
+}, 1500); // ヘッダーのスクロールデモが終わった後に実行
+
+
+    /*ver.1.991-2    180行目くらいを編集*/
 
 
     </script>
