@@ -9,23 +9,32 @@
     html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
     body { display: flex; flex-direction: column; }
 /* ヘッダー UI：横スクロール対応版 */
-    .header { 
-      background: #1a1a1a; 
-      padding: 6px 10px; 
-      border-bottom: 2px solid #333; 
-      flex-shrink: 0; 
-      font-size: 11px; 
-      z-index: 100; 
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-      flex-wrap: nowrap; /* 折り返さず横に並べる */
-      overflow-x: auto;  /* はみ出したら横スクロール可能に */
-      -webkit-overflow-scrolling: touch; 
-    }
+/* ヘッダー UI：スクロールの気づきを最大化 */
+.header {
+  background: #1a1a1a;
+  padding: 6px 10px;
+  border-bottom: 2px solid #333;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  /* 右端を少し薄くして「続き」を予感させる */
+  mask-image: linear-gradient(to right, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
+}
 
-    /* スクロールバーを隠す（スッキリさせるため） */
-    .header::-webkit-scrollbar { display: none; }
+/* スクロールバーをあえて細く表示（道しるべ） */
+.header::-webkit-scrollbar {
+  display: block;
+  height: 3px;
+}
+.header::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
 
     .group { 
       background: #222; 
@@ -177,7 +186,7 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.1.99</div>
+  <div class="footer-text">Ver.1.991</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -715,7 +724,22 @@ function speakText(text, lang) {
         window.speechSynthesis.speak(uttr);
     }, 100); 
 }
-    /*ver.1.99-3    180行目くらいを編集*/
+
+// 【UX改善】初回起動時にヘッダーを少し揺らしてスクロールを促す
+window.addEventListener('load', () => {
+  const header = document.querySelector('.header');
+  // スクロールが必要な画面幅の時だけ実行
+  if (header.scrollWidth > header.clientWidth) {
+    setTimeout(() => {
+      // 300pxだけ右にスライドして、400msかけて戻る（控えめかつ確実な動き）
+      header.scrollTo({ left: 300, behavior: 'smooth' });
+      setTimeout(() => {
+        header.scrollTo({ left: 0, behavior: 'smooth' });
+      }, 400);
+    }, 800); // 起動の0.8秒後に実行
+  }
+});
+    /*ver.1.991-1    180行目くらいを編集*/
 
 
     </script>
