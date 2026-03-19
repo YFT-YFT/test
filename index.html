@@ -874,14 +874,14 @@ window.addEventListener('load', () => {
   // 【演出1】0.3秒後に、大きく80pxスライドして0.25秒で戻る
   setTimeout(() => {
     if (header.scrollWidth > header.clientWidth) {
-      header.scrollTo({ left: 100, behavior: 'smooth' });
+      header.scrollTo({ left: 150, behavior: 'smooth' });
       
       // 往復の「戻り」を早める（スライド開始から250ms後）
       setTimeout(() => {
         header.scrollTo({ left: 0, behavior: 'smooth' });
-      }, 500);
+      }, 800);
     }
-  }, 200); // 起動直後のモタつきが消えた頃に開始
+  }, 600); // 起動直後のモタつきが消えた頃に開始
 
   // 【演出2】スライドが戻りきる直前（0.8秒後）に「ぷるぷる」を開始
   setTimeout(() => {
@@ -889,7 +889,7 @@ window.addEventListener('load', () => {
       btnHelp.classList.add('pulu-pulu');
       setTimeout(() => btnHelp.classList.remove('pulu-pulu'), 400);
     }
-  }, 800); 
+  }, 1600); 
 });
 
 function updateUIMode() {
