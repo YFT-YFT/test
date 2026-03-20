@@ -236,7 +236,7 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.1</div>
+  <div class="footer-text">Ver.2.2</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -716,20 +716,53 @@ function saveLogFile() {
   }
 
   btnToggle.onclick = () => {
-    if (!isListening) {
-      isListening = true; chatLog = []; logContainer.innerHTML = ""; interimContainer.textContent = "";
-      lastSpeechTime = Date.now();
-      initRecognition(); startWatchdog();
-      btnToggle.textContent = "停止"; btnToggle.style.background = "#cc0000";
-      autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
-    } else {
-      if (currentText) commitTranslation(currentText);
-      isListening = false; clearInterval(autoSaveTimer); clearInterval(watchdogInterval);
-      if (recognition) { recognition.onend = null; recognition.stop(); }
-      saveLogFile();
-      statusDot.textContent = "STOPPED";
-      btnToggle.textContent = "同時翻訳開始"; btnToggle.style.background = "#0066ff";
+  if (!isListening) {
+    // --- 開始処理 ---
+    isListening = true; 
+    chatLog = []; 
+    logContainer.innerHTML = ""; 
+    interimContainer.textContent = "";
+    lastSpeechTime = Date.now();
+    
+    startAudioMonitor(); 
+    initRecognition(); 
+    startWatchdog();
+    
+    btnToggle.textContent = "停止"; 
+    btnToggle.style.background = "#cc0000";
+    autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
+
+  } else {
+    // --- 停止処理 ---
+    if (currentText) commitTranslation(currentText);
+    isListening = false; 
+    
+    clearInterval(autoSaveTimer); 
+    clearInterval(watchdogInterval);
+    
+    if (recognition) { 
+      recognition.onend = null; 
+      recognition.stop(); 
     }
+    
+    // ★ここが重要（メモリ解放）
+    if (animationId) cancelAnimationFrame(animationId);
+    
+    if (audioContext) {
+      audioContext.close().then(() => {
+        audioContext = null;
+        console.log("マイク解放OK");
+      });
+    }
+
+    saveLogFile();
+    
+    statusDot.textContent = "STOPPED";
+    statusDot.style.color = "#aaa";
+    
+    btnToggle.textContent = "同時翻訳開始"; 
+    btnToggle.style.background = "#0066ff";
+  }
 };
 
 // --- 暫定テキストの操作機能（Ver.1.95-6: 指の数で打ち分け版） ---
@@ -919,8 +952,17 @@ window.addEventListener("load", () => {
     updateUIMode();
 });
 
+// --- スペースキーで開始/停止 ---
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    btnToggle.click();
+  }
+});
 
-    /*ver.2.1-1   211行目くらいを編集*/
+
+    /*ver.2.2-1   239行目くらいを編集*/
 
 
     </script>
