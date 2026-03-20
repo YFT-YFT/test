@@ -236,7 +236,7 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.2</div>
+  <div class="footer-text">Ver.2.3</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
@@ -574,8 +574,11 @@ recognition.onresult = async e => {
       statusDot.style.color = "red";
       
       let interimTranscript = "";
+      let isFinalResult = false; // ★追加：確定フラグ
       for (let i = e.resultIndex; i < e.results.length; i++) {
         interimTranscript += e.results[i][0].transcript;
+        // ★ブラウザが「文章の区切りだ」と判断したかチェック
+        if (e.results[i].isFinal) isFinalResult = true;
       }
       
       const text = interimTranscript.trim();
@@ -594,9 +597,19 @@ recognition.onresult = async e => {
           // style="color:${mainColor.value}" を追加します
 interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
         } catch(e) { interimContainer.textContent = currentText; }
-      } else {
-        interimContainer.textContent = "... " + currentText;
+} else {
+        interimContainer.textContent = currentText;
       }
+
+      // ★【ここがポイント】
+      // AIが「確定」と言った時だけ即座にログへ。
+      // 言わない時は、下の watchdog（タイマー）が今まで通り処理してくれます。
+      if (isFinalResult) {
+        commitTranslation(currentText);
+        currentText = ""; 
+        interimContainer.textContent = "";
+      }
+      
       interimContainer.scrollTop = interimContainer.scrollHeight;
     };
       
@@ -969,7 +982,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 
-    /*ver.2.2-1   239行目くらいを編集*/
+    /*ver.2.3-1   239行目くらいを編集*/
 
 
     </script>
