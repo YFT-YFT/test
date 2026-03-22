@@ -12,9 +12,21 @@
 </script>
   <style>
     :root { --main-fs: 75px; --sub-fs: 20px; }
-    html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden;
-    /* UDデジタル教科書体を最優先にする */
-  font-family: "UD Digi Kyokasho N-R", "UD デジタル 教科書体 N-R", "UD Digi Kyokasho NK-R", "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; 
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  padding: 0; 
+  background: #000; 
+  color: #fff; 
+  overflow: hidden; 
+  /* UDデジタル教科書体を最優先にしつつ、世界の特殊文字をカバーするリレー */
+  font-family: 
+    "UD Digi Kyokasho N-R", "UD デジタル 教科書体 N-R", "UD Digi Kyokasho NK-R", 
+    "BIZ UDPGothic", 
+    "Leelawadee UI",    /* タイ語の標準的な読みやすいフォント */
+    "Segoe UI Historic", /* アラビア語・ヘブライ語・ヒエログリフ等に強い */
+    "Arial Unicode MS",  /* 最終的な全世界対応の巨大フォント */
+    sans-serif; 
 }
     body { display: flex; flex-direction: column; }
 /* ヘッダー UI：横スクロール対応版 */
@@ -979,7 +991,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 
-    /*ver.2.31-2   239行目くらいを編集*/
+    /*ver.2.31-3   254行目くらいを編集*/
 
 
     </script>
