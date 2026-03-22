@@ -12,7 +12,10 @@
 </script>
   <style>
     :root { --main-fs: 75px; --sub-fs: 20px; }
-    html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden; font-family: "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; }
+    html, body { height: 100%; margin: 0; padding: 0; background: #000; color: #fff; overflow: hidden;
+    /* UDデジタル教科書体を最優先にする */
+  font-family: "UD Digi Kyokasho N-R", "UD デジタル 教科書体 N-R", "UD Digi Kyokasho NK-R", "BIZ UDPGothic", "Hiragino Sans", "Meiryo", sans-serif; 
+}
     body { display: flex; flex-direction: column; }
 /* ヘッダー UI：横スクロール対応版 */
     .header { 
@@ -142,7 +145,7 @@ input, select {
     .trans-text { font-weight: 900; line-height: 1.2; word-wrap: break-word; letter-spacing: -0.01em; font-size: var(--main-fs); }
     
     /* 逆翻訳文：少し小さめの淡い緑色 */
-    .re-trans-text { font-size: calc(var(--sub-fs) * 0.9); color: #90ee90; opacity: 0.8; margin-top: 6px; padding-left: 15px; font-style: italic; }
+    .re-trans-text { font-size: calc(var(--sub-fs) * 0.9); color: #90ee90; opacity: 0.8; margin-top: 6px; padding-left: 15px; font-style: normal; }
     
     /* 過去ログの減衰 */
     .log-item:not(:first-child) { opacity: 0.4; filter: none; }
@@ -976,7 +979,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 
-    /*ver.2.3-2   239行目くらいを編集*/
+    /*ver.2.3-3   239行目くらいを編集*/
 
 
     </script>
