@@ -617,8 +617,8 @@ interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><s
         commitTranslation(currentText);
         currentText = ""; 
         interimContainer.textContent = "";
-      }
-      
+      // 翻訳とログ追加を「非同期」で行い、認識のループを止めない
+        setTimeout(() => commitTranslation(textToCommit), 0);
       interimContainer.scrollTop = interimContainer.scrollHeight;
     };
       
@@ -991,7 +991,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 
-    /*ver.2.31-3   254行目くらいを編集*/
+    /*ver.2.34-1   254行目くらいを編集*/
 
 
     </script>
