@@ -40,7 +40,7 @@ html, body {
       display: flex; 
       align-items: center; 
       gap: 8px; 
-      flex-wrap: nowrap; /* 折り返さず横に並べる */
+      flex-wrap: nowrap; /* 折り返さず横に並める */
       overflow-x: auto;  /* はみ出したら横スクロール可能に */
       -webkit-overflow-scrolling: touch; 
       /* --- ここに追加！ --- */
@@ -89,6 +89,21 @@ input, select {
       scroll-snap-align: start;
     }
 
+    /* プロンプター切替ボタン（追加） */
+    #btn-prompter {
+      background: #444;
+      color: #fff;
+      border: 1px solid #666;
+      padding: 8px 5px;
+      width: 90px;
+      font-size: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+
 /* 使い方ボタン：右端固定・影・アニメーション */
 /* 使い方ボタン：最強の右端固定設定 */
     #btn-help { 
@@ -127,12 +142,12 @@ input, select {
     /* 表示メインエリア */
     #display-area { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; scroll-behavior: smooth; }
     
-    /* 暫定ボックス：白・標準・2行分高さを固定 */
+    /* 暫定ボックス：白・標準・ドラッグ調整対応 */
     #interim-container { 
       min-height: 3.0em; 
-      max-height: 3.0em;
+      height: 120px; /* 初期値 */
       margin-bottom: 10px; 
-      border-bottom: 2px solid #0066ff; 
+      border-bottom: 4px solid #0066ff; /* 線を太くして掴みやすく */
       flex-shrink: 0; 
       padding-bottom: 5px; 
       font-size: 24px; 
@@ -142,7 +157,18 @@ input, select {
       word-wrap: break-word; 
       overflow-y: hidden;
       line-height: 1.5;
+      cursor: ns-resize; /* 上下リサイズのカーソル */
+      touch-action: none;
+      position: relative;
     }
+
+/* プロンプターモード時の追加スタイル */
+body.prompter-active #interim-container {
+  font-size: var(--main-fs) !important;
+}
+body.prompter-active .interim-orig {
+  display: none !important;
+}
 
 /* 暫定エリア内のレイアウト */
 .interim-orig { font-size: 0.6em; color: #ccc; display: block; }
@@ -203,6 +229,7 @@ input, select {
 
 <div class="header">
   <button id="btn-toggle">同時翻訳開始</button>
+  <button id="btn-prompter" onclick="togglePrompter()">プロンプター</button>
 
   <div class="group">
     <div id="vol-meter"><div id="vol-bar"></div></div>
@@ -251,13 +278,21 @@ input, select {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.3 (2026/3/22更新)</div>
+  <div class="footer-text">Ver.2.4 (2026/3/25更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT</div>
 </div>
 
 <div id="modal-help">
   <h2>📖 Simultaneous_Interpreter 使い方</h2>
   
+  <div class="help-section">
+    <h3>NEW: プロンプターモードと高さ調整</h3>
+    <ul>
+      <li><b>プロンプターモード:</b> 上部バーのボタンでON。暫定表示がログと同じ特大サイズになります。枠（青い線）に文字が届くと自動でログに確定されます。</li>
+      <li><b>高さの変更:</b> 暫定エリアの下にある<b>青い太線</b>をドラッグすると、エリアの高さを自由に変えられます。</li>
+    </ul>
+  </div>
+
   <div class="help-section">
     <h3>1. 基本的な使用手順</h3>
     <ul>
@@ -469,6 +504,7 @@ const btnSwap = document.getElementById('btn-swap');
 
   let isListening = false, recognition, chatLog = [], lastSpeechTime = 0, autoSaveTimer, watchdogInterval, currentText = "";
   let audioContext, analyser, dataArray, animationId;
+  let isPrompterMode = false; // プロンプターモード管理
 
   langData.forEach(l => { selIn.innerHTML += `<option value="${l[1]}">${l[0]}</option>`; selOut.innerHTML += `<option value="${l[2]}">${l[0]}</option>`; });
 
@@ -506,6 +542,7 @@ const savedPitch = localStorage.getItem("speechPitch");
 if(savedRate) document.getElementById('rate-slider').value = savedRate;
 if(savedPitch) document.getElementById('pitch-slider').value = savedPitch;
 
+    updateUIMode(); // 初期起動時にモード反映
   });
 
 const saveSettings = () => {
@@ -538,6 +575,55 @@ const saveSettings = () => {
 // イベントの紐付け（ここは関数の外）
 [sizeSlider, mainColor, selIn, selOut, fileNameInput, splitSecInput, autoSaveInput].forEach(el => el.onchange = saveSettings);
 sizeSlider.oninput = () => updateSize(sizeSlider.value);
+
+  // プロンプターモード切替
+  function togglePrompter() {
+    isPrompterMode = !isPrompterMode;
+    const btn = document.getElementById('btn-prompter');
+    if (isPrompterMode) {
+      document.body.classList.add('prompter-active');
+      btn.style.background = "#0066ff";
+      btn.textContent = "プロンプターON";
+    } else {
+      document.body.classList.remove('prompter-active');
+      btn.style.background = "#444";
+      btn.textContent = "プロンプター";
+      interimContainer.style.height = "120px";
+    }
+  }
+
+  // ドラッグ高さ調整
+  (function initResizable() {
+    let startY, startHeight;
+    const onMouseDown = (e) => {
+      const rect = interimContainer.getBoundingClientRect();
+      const y = e.clientY || (e.touches && e.touches[0].clientY);
+      if (y > rect.bottom - 20 && y < rect.bottom + 10) {
+        startY = y;
+        startHeight = rect.height;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('touchmove', onMouseMove, {passive: false});
+        document.addEventListener('touchend', onMouseUp);
+        document.body.style.userSelect = 'none';
+      }
+    };
+    const onMouseMove = (e) => {
+      const y = e.clientY || (e.touches && e.touches[0].clientY);
+      const newHeight = startHeight + (y - startY);
+      if (newHeight > 60) interimContainer.style.height = newHeight + 'px';
+      if (e.cancelable) e.preventDefault();
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('touchmove', onMouseMove);
+      document.removeEventListener('touchend', onMouseUp);
+      document.body.style.userSelect = '';
+    };
+    interimContainer.addEventListener('mousedown', onMouseDown);
+    interimContainer.addEventListener('touchstart', onMouseDown, {passive: false});
+  })();
 
   async function startAudioMonitor() {
     if (audioContext) return;
@@ -597,7 +683,7 @@ recognition.onresult = async e => {
       
       const checkInterim = document.getElementById('check-interim-trans').checked;
       
-      if (checkInterim) {
+      if (checkInterim && selIn.value !== selOut.value) {
         const tl = selOut.value;
         try {
           const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`);
@@ -610,6 +696,14 @@ interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><s
         interimContainer.textContent = currentText;
       }
 
+      // プロンプター判定：文字が枠を溢れたら確定
+      if (isPrompterMode && interimContainer.scrollHeight > interimContainer.clientHeight + 10) {
+        commitTranslation(currentText);
+        currentText = ""; interimContainer.textContent = "";
+        restartRecognition();
+        return;
+      }
+
       // ★【ここがポイント】
       // AIが「確定」と言った時だけ即座にログへ。
       // 言わない時は、下の watchdog（タイマー）が今まで通り処理してくれます。
@@ -617,8 +711,8 @@ interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><s
         commitTranslation(currentText);
         currentText = ""; 
         interimContainer.textContent = "";
-      // 翻訳とログ追加を「非同期」で行い、認識のループを止めない
-        setTimeout(() => commitTranslation(textToCommit), 0);
+      }
+      
       interimContainer.scrollTop = interimContainer.scrollHeight;
     };
       
@@ -861,7 +955,11 @@ interimContainer.addEventListener('touchstart', (e) => {
 // PC用マウス・キーボードイベント
 interimContainer.onmousedown = (e) => {
   lastSpeechTime = Date.now();
-  if (e.button === 0) forceCommit(); // 左クリック
+  if (e.button === 0) {
+      // 下端ドラッグ中でない場合のみ確定
+      const rect = interimContainer.getBoundingClientRect();
+      if (e.clientY < rect.bottom - 20) forceCommit();
+  }
   else if (e.button === 2) resetInterim(); // 右クリック
 };
 interimContainer.oncontextmenu = (e) => e.preventDefault();
@@ -991,8 +1089,9 @@ window.addEventListener('keydown', (e) => {
 });
 
 
-    /*ver.2.34-1   254行目くらいを編集*/
+    /*ver.2.4   254行目くらいを編集*/
 
 
     </script>
 </body>
+</html>
