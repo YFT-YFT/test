@@ -685,22 +685,27 @@ input, select {
   // ★ ユーザー辞書エンジン
   // ============================================================
   let userDict = []; // [{from: "ふじい", to: "藤井"}, ...]
-
+  let dictMap = {};
+  let dictPattern = null;
+  let mediaStream = null; // ★マイク完全解放用
   /** localStorage から辞書を読み込む */
-  function loadDictFromStorage() {
-    try {
-      const saved = localStorage.getItem("userDict");
-      if (saved) userDict = JSON.parse(saved);
-    } catch(e) { userDict = []; }
-    renderDictTable();
-    updateDictBadge();
-  }
+ function loadDictFromStorage() {
+  try {
+    const saved = localStorage.getItem("userDict");
+    if (saved) userDict = JSON.parse(saved);
+  } catch(e) { userDict = []; }
+
+  rebuildDictionary(); // ★追加
+  renderDictTable();
+  updateDictBadge();
+}
 
   /** localStorage に辞書を保存する */
-  function saveDictToStorage() {
-    localStorage.setItem("userDict", JSON.stringify(userDict));
-    updateDictBadge();
-  }
+function saveDictToStorage() {
+  localStorage.setItem("userDict", JSON.stringify(userDict));
+  rebuildDictionary(); // ★追加
+  updateDictBadge();
+}
 
   /** バッジ（件数表示）を更新 */
   function updateDictBadge() {
@@ -712,18 +717,13 @@ input, select {
    * テキストを受け取り、辞書ペアで全置換して返す
    * commitTranslation と onresult の表示直前に挟む
    */
-  function applyUserDictionary(text) {
-    if (!userDict.length) return text;
-    let result = text;
-    for (const entry of userDict) {
-      if (!entry.from) continue;
-      // グローバル・大文字小文字無視で全置換
-      const regex = new RegExp(entry.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-      result = result.replace(regex, entry.to);
-    }
-    return result;
-  }
+function applyUserDictionary(text) {
+  if (!dictPattern) return text;
 
+  return text.replace(dictPattern, (match) => {
+    return dictMap[match.toLowerCase()] || match;
+  });
+}
   /** 辞書テーブルを再描画 */
   function renderDictTable() {
     const tbody = document.getElementById('dict-tbody');
@@ -832,27 +832,30 @@ input, select {
   // 音声モニター
   // ============================================================
   async function startAudioMonitor() {
-    if (audioContext) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-      analyser.fftSize = 256;
-      dataArray = new Uint8Array(analyser.frequencyBinCount);
-      const draw = () => {
-        if (!isListening) return;
-        analyser.getByteFrequencyData(dataArray);
-        let sum = 0; for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
-        let volume = Math.min(100, (sum / dataArray.length) * 2.5);
-        volBar.style.width = volume + "%";
-        volBar.style.background = volume > 70 ? "red" : "#00ff00";
-        animationId = requestAnimationFrame(draw);
-      };
-      draw();
-    } catch(e) {}
-  }
+  if (audioContext) return;
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true }); // ★変更
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    source.connect(analyser);
+
+    analyser.fftSize = 256;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    const draw = () => {
+      if (!isListening) return;
+      analyser.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
+      let volume = Math.min(100, (sum / dataArray.length) * 2.5);
+      volBar.style.width = volume + "%";
+      volBar.style.background = volume > 70 ? "red" : "#00ff00";
+      animationId = requestAnimationFrame(draw);
+    };
+    draw();
+  } catch(e) {}
+}
 
   function restartRecognition() {
     if (!recognition) return;
@@ -1055,36 +1058,61 @@ input, select {
     chatLog = [];
   }
 
-  btnToggle.onclick = () => {
-    if (!isListening) {
-      isListening = true; 
-      chatLog = []; 
-      logContainer.innerHTML = ""; 
-      interimContainer.innerHTML = "";
-      lastSpeechTime = Date.now();
-      startAudioMonitor(); 
-      initRecognition(); 
-      startWatchdog();
-      btnToggle.textContent = "停止"; 
-      btnToggle.style.background = "#cc0000";
-      autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
-    } else {
-      if (currentText) commitTranslation(applyUserDictionary(currentText));
-      isListening = false; 
-      clearInterval(autoSaveTimer); 
-      clearInterval(watchdogInterval);
-      if (recognition) { recognition.onend = null; recognition.stop(); }
-      if (animationId) cancelAnimationFrame(animationId);
-      if (audioContext) {
-        audioContext.close().then(() => { audioContext = null; });
-      }
-      saveLogFile();
-      statusDot.textContent = "STOPPED";
-      statusDot.style.color = "#aaa";
-      btnToggle.textContent = "同時翻訳開始"; 
-      btnToggle.style.background = "#0066ff";
+btnToggle.onclick = () => {
+  if (!isListening) {
+
+    isListening = true;
+    chatLog = [];
+    logContainer.innerHTML = "";
+    interimContainer.innerHTML = "";
+    lastSpeechTime = Date.now();
+
+    startAudioMonitor();
+    initRecognition();
+    startWatchdog();
+
+    btnToggle.textContent = "停止";
+    btnToggle.style.background = "#cc0000";
+
+    autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
+
+  } else {
+
+    if (currentText) commitTranslation(applyUserDictionary(currentText));
+
+    isListening = false;
+    clearInterval(autoSaveTimer);
+    clearInterval(watchdogInterval);
+
+    if (recognition) {
+      recognition.onend = null;
+      recognition.stop();
     }
-  };
+
+    if (animationId) cancelAnimationFrame(animationId);
+
+    // ★ AudioContext解放
+    if (audioContext) {
+      audioContext.close().then(() => {
+        audioContext = null;
+      });
+    }
+
+    // ★ マイク完全停止（これが最重要）
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+
+    saveLogFile();
+
+    statusDot.textContent = "STOPPED";
+    statusDot.style.color = "#aaa";
+
+    btnToggle.textContent = "同時翻訳開始";
+    btnToggle.style.background = "#0066ff";
+  }
+};
 
   // 暫定テキスト操作
   function resetInterim() {
@@ -1204,7 +1232,32 @@ input, select {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.40 - 変更サマリー：
+function rebuildDictionary() {
+  dictMap = {};
+
+  userDict.forEach(entry => {
+    if (!entry.from) return;
+    dictMap[entry.from.toLowerCase()] = entry.to;
+  });
+
+  const keys = Object.keys(dictMap);
+
+  if (keys.length === 0) {
+    dictPattern = null;
+    return;
+  }
+
+  // ★ 長い順（超重要）
+  keys.sort((a, b) => b.length - a.length);
+
+  const escaped = keys.map(k =>
+    k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  );
+
+  dictPattern = new RegExp(`(${escaped.join('|')})`, 'gi');
+}
+
+  /* Ver.2.40-2 - 変更サマリー：
      1. updateUIMode: 同言語時チェックボックス強制連動（完全実装）
      2. onresult: 同言語モード時の暫定エリアをmainColor.valueで着色（白固定バグ修正）
      3. onresult: 翻訳モード時の暫定エリア：原文=グレー、翻訳=mainColor.value（主役）
