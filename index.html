@@ -718,12 +718,25 @@ function saveDictToStorage() {
    * commitTranslation と onresult の表示直前に挟む
    */
 function applyUserDictionary(text) {
-  if (!dictPattern) return text;
+  if (!dictPattern || !text) return text;
 
   return text.replace(dictPattern, (match) => {
-    return dictMap[match.toLowerCase()] || match;
+    // 完全一致優先
+    const lower = match.toLowerCase();
+
+    if (dictMap[lower]) {
+      return dictMap[lower];
+    }
+
+    // 念のため元キー一致も確認（ケース保持対策）
+    if (dictMap[match]) {
+      return dictMap[match];
+    }
+
+    return match;
   });
 }
+
   /** 辞書テーブルを再描画 */
   function renderDictTable() {
     const tbody = document.getElementById('dict-tbody');
@@ -1237,23 +1250,30 @@ function rebuildDictionary() {
 
   userDict.forEach(entry => {
     if (!entry.from) return;
-    dictMap[entry.from.toLowerCase()] = entry.to;
+
+    const key = entry.from.trim();
+    const val = entry.to;
+
+    if (!key) return;
+
+    dictMap[key.toLowerCase()] = val;
   });
 
-  const keys = Object.keys(dictMap);
+  let keys = Object.keys(dictMap);
 
   if (keys.length === 0) {
     dictPattern = null;
     return;
   }
 
-  // ★ 長い順（超重要）
+  // 長い順（最重要）
   keys.sort((a, b) => b.length - a.length);
 
   const escaped = keys.map(k =>
     k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   );
 
+  // ★ 単語境界を必要に応じてONにできるように
   dictPattern = new RegExp(`(${escaped.join('|')})`, 'gi');
 }
 
