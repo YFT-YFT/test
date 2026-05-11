@@ -256,7 +256,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-3 (2026/5/11更新)</div>
+  <div class="footer-text">Ver.2.32-4 (2026/5/11更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -488,19 +488,26 @@ html, body {
   });
 
   // --- マウスドラッグ ---
-  resizeHandle.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    const startY      = e.clientY;
-    const startHeight = interimContainer.getBoundingClientRect().height;
+ resizeHandle.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const startY      = e.clientY;
+  const startHeight = interimContainer.getBoundingClientRect().height;
+  let pendingResize = false;  // ★追加
 
     resizeHandle.classList.add('dragging');
     document.body.classList.add('resizing');
 
-    const onMove = (e) => {
-      const delta  = e.clientY - startY;
-      const newH   = Math.min(INTERIM_MAX_PX, Math.max(INTERIM_MIN_PX, startHeight + delta));
+const onMove = (e) => {
+  const delta = e.clientY - startY;
+  const newH  = Math.min(INTERIM_MAX_PX, Math.max(INTERIM_MIN_PX, startHeight + delta));
+  if (!pendingResize) {
+    pendingResize = true;
+    requestAnimationFrame(() => {
       interimContainer.style.height = newH + 'px';
-    };
+      pendingResize = false;
+    });
+  }
+};
 
     const onUp = () => {
       resizeHandle.classList.remove('dragging');
@@ -517,20 +524,26 @@ html, body {
   });
 
   // --- タッチドラッグ（スマホ対応） ---
-  resizeHandle.addEventListener('touchstart', (e) => {
-    // 暫定エリアのタッチ確定と競合しないよう、handleのみ処理
-    const touch       = e.touches[0];
-    const startY      = touch.clientY;
-    const startHeight = interimContainer.getBoundingClientRect().height;
-
+resizeHandle.addEventListener('touchstart', (e) => {
+  const touch       = e.touches[0];
+  const startY      = touch.clientY;
+  const startHeight = interimContainer.getBoundingClientRect().height;
+  let pendingResize = false;  // ★追加
+  
     resizeHandle.classList.add('dragging');
 
     const onMove = (e) => {
-      const t    = e.touches[0];
-      const delta = t.clientY - startY;
-      const newH  = Math.min(INTERIM_MAX_PX, Math.max(INTERIM_MIN_PX, startHeight + delta));
+  const t     = e.touches[0];
+  const delta = t.clientY - startY;
+  const newH  = Math.min(INTERIM_MAX_PX, Math.max(INTERIM_MIN_PX, startHeight + delta));
+  if (!pendingResize) {
+    pendingResize = true;
+    requestAnimationFrame(() => {
       interimContainer.style.height = newH + 'px';
-    };
+      pendingResize = false;
+    });
+  }
+};
 
     const onEnd = () => {
       resizeHandle.classList.remove('dragging');
@@ -617,7 +630,14 @@ html, body {
 
   [sizeSlider, mainColor, selIn, selOut, fileNameInput, splitSecInput, autoSaveInput]
     .forEach(el => el.onchange = saveSettings);
-  sizeSlider.oninput = () => updateSize(sizeSlider.value);
+  let lastSliderUpdate = 0;
+sizeSlider.oninput = () => {
+  const now = Date.now();
+  if (now - lastSliderUpdate > 80) {  // 80ms = 約12fps
+    updateSize(sizeSlider.value);
+    lastSliderUpdate = now;
+  }
+};
 
   function updateUIMode() {
     const isSameLang = (selIn.value === selOut.value);
@@ -955,7 +975,7 @@ html, body {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-3 変更サマリー  */
+  /* Ver.2.32-4 変更サマリー  */
 </script>
 </body>
 </html>
