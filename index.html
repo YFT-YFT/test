@@ -169,7 +169,7 @@ html, body {
     }
 
     .interim-orig  { font-size: 0.6em; color: #ccc; display: block; }
-    .interim-trans { font-size: 1.0em; color: #fff; display: block; font-weight: bold; }
+   .interim-trans {   font-size: calc(var(--main-fs) * 0.333);  /* メイン大の1/3程度 */   color: #fff;   display: block;   font-weight: bold; }
       
     #log-container { display: flex; flex-direction: column; gap: 30px; }
     .log-item { transition: opacity 0.8s; }
@@ -256,7 +256,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-2 (2026/5/10更新)</div>
+  <div class="footer-text">Ver.2.32-3 (2026/5/11更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -955,15 +955,7 @@ html, body {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-2 変更サマリー：
-     - 青いライン（#resize-handle）をHTMLの独立要素として分離
-     - #interim-container の height をドラッグで変更可能に
-       （min-height/max-height方式 → height管理方式へ変更）
-     - overflow-y: auto により行数が増えてもスクロールで見られる
-     - マウスドラッグ・タッチドラッグ両対応
-     - ダブルクリックでデフォルト高さ（3.0em）にリセット
-     - ドラッグ後の高さをlocalStorageに保存し、起動時に復元
-  */
+  /* Ver.2.32-3 変更サマリー  */
 </script>
 </body>
 </html>
