@@ -177,8 +177,12 @@ html, body {
     .trans-text   { font-weight: 900; line-height: 1.2; word-wrap: break-word; letter-spacing: -0.01em; font-size: var(--main-fs); }
     .re-trans-text{ font-size: calc(var(--sub-fs) * 0.9); color: #90ee90; opacity: 0.8; margin-top: 6px; padding-left: 15px; font-style: normal; }
     
-    .log-item:not(:first-child) { opacity: 0.8; filter: none; }
-    .log-item:not(:first-child) .trans-text { font-size: calc(var(--main-fs) * 0.5); }
+.log-item:not(:first-child) { opacity: 0.8; filter: none; }
+.log-item:not(:first-child) .trans-text { font-size: calc(var(--main-fs) * 0.5); }
+
+/* ★均等モード：履歴も最新と同じサイズ・同じ透明度 */
+#log-container.equal-mode .log-item:not(:first-child) .trans-text { font-size: var(--main-fs) !important; }
+#log-container.equal-mode .log-item:not(:first-child) { opacity: 1.0 !important; }
 
     .footer-info { position: fixed; bottom: 10px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; pointer-events: none; z-index: 200; }
     .footer-text { 
@@ -218,8 +222,9 @@ html, body {
     翻訳:<select id="sel-out"></select>
   </div>
 
-  <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
-  <div class="group">逆翻訳:<input type="checkbox" id="check-re-trans"></div>
+<div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
+<div class="group">逆翻訳:<input type="checkbox" id="check-re-trans"></div>
+<div class="group">均等:<input type="checkbox" id="check-equal-size"></div>
 
   <div class="group">
     ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 
@@ -256,7 +261,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-6 (2026/5/12更新)</div>
+  <div class="footer-text">Ver.2.32-7 (2026/5/12更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -606,10 +611,16 @@ resizeHandle.addEventListener('touchstart', (e) => {
     if(savedRate)  document.getElementById('rate-slider').value  = savedRate;
     if(savedPitch) document.getElementById('pitch-slider').value = savedPitch;
 
-    restoreInterimHeight(); // ★ 高さ復元
+restoreInterimHeight();
     updateUIMode();
-  });
 
+    // ★均等モード復元
+    if (localStorage.getItem('equalSize') === 'true') {
+      document.getElementById('check-equal-size').checked = true;
+      logContainer.classList.add('equal-mode');
+    }
+  });
+    
   const saveSettings = () => {
     let splitVal = parseFloat(splitSecInput.value);
     if (isNaN(splitVal) || splitVal < 0.1) splitSecInput.value = "1.0";
@@ -639,7 +650,13 @@ sizeSlider.oninput = () => {
   }
 };
 
-  function updateUIMode() {
+// ★均等モード切り替え
+document.getElementById('check-equal-size').onchange = function() {
+  logContainer.classList.toggle('equal-mode', this.checked);
+  localStorage.setItem('equalSize', this.checked);
+};
+
+function updateUIMode() {
     const isSameLang = (selIn.value === selOut.value);
     if (isSameLang) {
       document.getElementById('check-interim-trans').checked = true;
@@ -975,7 +992,7 @@ sizeSlider.oninput = () => {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-6 変更サマリー  */
+  /* Ver.2.32-7 変更サマリー  */
 </script>
 </body>
 </html>
