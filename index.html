@@ -44,7 +44,7 @@ html, body {
       -webkit-overflow-scrolling: touch; 
       scroll-snap-type: x proximity;
     }
-    .header::-webkit-scrollbar { display: none; }
+/* .header::-webkit-scrollbar { display: none; } */
 
     .group { 
       background: #222; 
@@ -171,7 +171,7 @@ html, body {
 .interim-orig {   font-size: calc(var(--main-fs) * 0.25);  /* メイン大の25% */   color: #ccc;     display: block;}
 .interim-trans {   font-size: calc(var(--main-fs) * 0.333);  /* メイン大の1/3程度 */     color: #fff;     display: block;     font-weight: bold; }
       
-    #log-container { display: flex; flex-direction: column; gap: 30px; }
+#log-container { display: flex; flex-direction: column; gap: var(--log-gap, 30px); }
     .log-item { transition: opacity 0.8s; }
     .orig-text    { font-size: var(--sub-fs); color: #ccc; border-left: 5px solid #444; padding-left: 15px; margin-bottom: 4px; font-weight: 500; }
     .trans-text   { font-weight: 900; line-height: 1.2; word-wrap: break-word; letter-spacing: -0.01em; font-size: var(--main-fs); }
@@ -224,7 +224,6 @@ html, body {
 
 <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
 <div class="group">逆翻訳:<input type="checkbox" id="check-re-trans"></div>
-<div class="group">均等:<input type="checkbox" id="check-equal-size"></div>
 
   <div class="group">
     ログ名:<input type="text" id="file-name" placeholder="保存名" style="width:65px"> 
@@ -240,10 +239,12 @@ html, body {
     保存:<input type="number" id="auto-save-min" value="10" min="1" style="width:35px">m
   </div>
 
-  <div class="group">
-    色:<input type="color" id="main-color" value="#ffff00"> 
-    大:<input type="range" id="size-slider" min="10" max="250" value="75" style="width:90px">
-  </div>
+<div class="group">
+  色:<input type="color" id="main-color" value="#ffff00"> 
+  大:<input type="range" id="size-slider" min="10" max="250" value="75" style="width:90px">
+  均等:<input type="checkbox" id="check-equal-size">
+  行間:<input type="range" id="gap-slider" min="0" max="50" value="30" style="width:60px">
+</div>
   
   <div class="group">
     速:<input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" style="width:60px">
@@ -261,7 +262,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-7 (2026/5/12更新)</div>
+  <div class="footer-text">Ver.2.32-8 (2026/5/12更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -457,6 +458,13 @@ html, body {
   const volBar = document.getElementById('vol-bar');
   const statusDot = document.getElementById('status-dot');
   const btnSwap = document.getElementById('btn-swap');
+  const gapSlider = document.getElementById('gap-slider');
+// oninput：スライダー操作時のみ
+gapSlider.oninput = () => {
+  document.documentElement.style.setProperty('--log-gap', gapSlider.value + 'px');
+  localStorage.setItem('logGap', gapSlider.value);
+};
+
 
   // ============================================================
   // ★ 暫定エリア ドラッグリサイズ
@@ -619,6 +627,13 @@ restoreInterimHeight();
       document.getElementById('check-equal-size').checked = true;
       logContainer.classList.add('equal-mode');
     }
+
+      // 復元処理はload時に（634行目あたりの均等モード復元の直後）
+      const savedGap = localStorage.getItem('logGap');
+      if (savedGap) {
+          gapSlider.value = savedGap;
+          document.documentElement.style.setProperty('--log-gap', savedGap +'px');
+}
   });
     
   const saveSettings = () => {
@@ -992,7 +1007,7 @@ function updateUIMode() {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-7 変更サマリー  */
+  /* Ver.2.32-8 変更サマリー  */
 </script>
 </body>
 </html>
