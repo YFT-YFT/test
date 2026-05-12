@@ -172,7 +172,8 @@ html, body {
 .interim-trans {   font-size: calc(var(--main-fs) * 0.333);  /* メイン大の1/3程度 */     color: #fff;     display: block;     font-weight: bold; }
 
       /* 均等モード：暫定エリアもログと同じサイズに */
-#interim-container.equal-mode .interim-trans {
+#interim-container.equal-mode .interim-trans,
+#interim-container.transcription-mode.equal-mode .interim-trans {
   font-size: var(--main-fs) !important;
 }
       
