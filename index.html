@@ -170,6 +170,11 @@ html, body {
 
 .interim-orig {   font-size: calc(var(--main-fs) * 0.25);  /* メイン大の25% */   color: #ccc;     display: block;}
 .interim-trans {   font-size: calc(var(--main-fs) * 0.333);  /* メイン大の1/3程度 */     color: #fff;     display: block;     font-weight: bold; }
+
+      /* 均等モード：暫定エリアもログと同じサイズに */
+#interim-container.equal-mode .interim-trans {
+  font-size: var(--main-fs) !important;
+}
       
 #log-container { display: flex; flex-direction: column; gap: var(--log-gap, 30px); }
     .log-item { transition: opacity 0.8s; }
@@ -623,10 +628,11 @@ restoreInterimHeight();
     updateUIMode();
 
     // ★均等モード復元
-    if (localStorage.getItem('equalSize') === 'true') {
-      document.getElementById('check-equal-size').checked = true;
-      logContainer.classList.add('equal-mode');
-    }
+if (localStorage.getItem('equalSize') === 'true') {
+  document.getElementById('check-equal-size').checked = true;
+  logContainer.classList.add('equal-mode');
+  interimContainer.classList.add('equal-mode');  // ★追加
+}
 
       // 復元処理はload時に（634行目あたりの均等モード復元の直後）
       const savedGap = localStorage.getItem('logGap');
@@ -666,8 +672,10 @@ sizeSlider.oninput = () => {
 };
 
 // ★均等モード切り替え
+// 修正後
 document.getElementById('check-equal-size').onchange = function() {
   logContainer.classList.toggle('equal-mode', this.checked);
+  interimContainer.classList.toggle('equal-mode', this.checked);  // ★追加
   localStorage.setItem('equalSize', this.checked);
 };
 
