@@ -256,7 +256,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-5 (2026/5/11更新)</div>
+  <div class="footer-text">Ver.2.32-6 (2026/5/12更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -716,9 +716,9 @@ sizeSlider.oninput = () => {
           const trans = data[0].map(s => s[0]).join("");
           interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
         } catch(e) { interimContainer.textContent = currentText; }
-      } else {
-        interimContainer.textContent = currentText;
-      }
+     } else {
+  interimContainer.innerHTML = `<span class="interim-trans">${currentText}</span>`;
+}
 
       if (isFinalResult) {
         commitTranslation(currentText);
@@ -975,7 +975,7 @@ sizeSlider.oninput = () => {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-5 変更サマリー  */
+  /* Ver.2.32-6 変更サマリー  */
 </script>
 </body>
 </html>
