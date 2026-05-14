@@ -202,6 +202,75 @@ html, body {
     .help-section { margin-bottom: 20px; background: #252525; padding: 15px; border-radius: 8px; }
     #btn-close-help { background: #cc0000; color: #fff; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
 
+    /* =====================================================
+       ★ ⌨ キーボード入力ボタン
+       ===================================================== */
+    #btn-keyboard {
+      background: #223;
+      color: #88aaff;
+      border: 1px solid #446;
+      padding: 0 8px;
+      height: 32px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    #btn-keyboard.active {
+      background: #004422;
+      color: #00ff88;
+      border-color: #00cc66;
+      box-shadow: 0 0 8px rgba(0, 255, 100, 0.5);
+    }
+    /* キーボードモード時の暫定エリア */
+    #interim-container.keyboard-mode {
+      border-bottom-color: #00cc66 !important;
+      background: rgba(0, 30, 15, 0.5);
+      caret-color: #00ff88;
+    }
+    /* キーボードモード時のプレースホルダー */
+    #interim-container.keyboard-mode:empty::before {
+      content: "ここに入力... Enter で確定 / Esc でキャンセル";
+      color: #446;
+      pointer-events: none;
+    }
+
+    /* =====================================================
+       ★ 確定ログ編集UI
+       ===================================================== */
+    /* 確定ログの編集ボタン（鉛筆アイコン） */
+    .log-edit-btn {
+      font-size: 0.4em;
+      opacity: 0;
+      margin-left: 8px;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: opacity 0.2s;
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #aaa;
+    }
+    .log-item:hover .log-edit-btn,
+    .log-item:first-child .log-edit-btn {
+      opacity: 1;
+    }
+    /* 編集中のログアイテム */
+    .log-item.editing .orig-text {
+      outline: 1px solid #666;
+      background: #1a1a1a;
+      padding: 4px 8px;
+      border-radius: 3px;
+      min-height: 1em;
+    }
+    .log-item.editing .orig-text[contenteditable="true"] {
+      outline: 1px solid #0066ff;
+      caret-color: #fff;
+    }
+
     #vol-meter { width: 40px; height: 10px; background: #333; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; border: 1px solid #555; }
     #vol-bar   { width: 0%; height: 100%; background: #00ff00; }
     
@@ -218,6 +287,7 @@ html, body {
   <button id="btn-toggle">同時翻訳開始</button>
 
   <div class="group">
+    <button id="btn-keyboard" title="⌨ キーボード入力モード（音声停止・手入力）">⌨</button>
     <div id="vol-meter"><div id="vol-bar"></div></div>
     <span id="status-dot" style="font-size:10px; color:#aaa; margin-left:5px;">READY</span>
   </div>
@@ -268,7 +338,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-9 (2026/5/13更新)</div>
+  <div class="footer-text">Ver.2.32-11 (2026/5/14更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -797,7 +867,7 @@ function updateUIMode() {
       if (!isListening) return;
       const now = Date.now();
       const splitLimit = (parseFloat(splitSecInput.value) || 1.0) * 1000;
-      if (currentText && (now - lastSpeechTime > splitLimit)) {
+      if (currentText && !isKeyboardMode && (now - lastSpeechTime > splitLimit)) {
         commitTranslation(currentText);
         currentText = ""; interimContainer.textContent = "";
         restartRecognition();
@@ -836,17 +906,27 @@ function updateUIMode() {
 
     const row = document.createElement("div");
     row.className = "log-item";
+    row.dataset.tl = tl;
+    row.dataset.sl = sl;
     const reTransHtml = reTrans ? `<div class="re-trans-text">↩️ ${reTrans}</div>` : "";
 
     row.innerHTML = `
-      <div class="orig-text">${text}</div>
+      <div class="orig-text" ondblclick="startLogEditFromDblClick(this)" title="ダブルクリックで編集">${text}</div>
       <div class="trans-text" 
            onclick="speakText('${trans.replace(/'/g, "\\'")}', '${tl}')" 
            style="color:${mainColor.value}; cursor:pointer;" 
            title="タップで読み上げ">
-        ${trans} <span style="font-size:0.5em; opacity:0.5; margin-left:5px;">🔊</span>
+        ${trans}
+        <span style="font-size:0.5em; opacity:0.5; margin-left:5px;">🔊</span>
+        <button class="log-edit-btn" title="この行の原文を編集して再翻訳">✏️編集</button>
       </div>
       ${reTransHtml}`;
+
+    // 編集ボタンのイベント登録
+    row.querySelector('.log-edit-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      startLogEdit(row, tl, sl);
+    });
 
     logContainer.prepend(row);
     chatLog.push(`${getTimestamp()}\t${text}\t${trans}\t${reTrans || ""}`);
@@ -951,24 +1031,253 @@ function updateUIMode() {
   }
 
   interimContainer.addEventListener('touchstart', (e) => {
+    if (isKeyboardMode) return;
     e.preventDefault(); 
     handleInterimTouch(e);
   }, { passive: false });
 
   interimContainer.onmousedown = (e) => {
+    if (isKeyboardMode) return;
     lastSpeechTime = Date.now();
     if (e.button === 0) forceCommit();
     else if (e.button === 2) resetInterim();
   };
-  interimContainer.oncontextmenu = (e) => e.preventDefault();
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') resetInterim();
-    if (e.key === 'Enter')  forceCommit();
-  });
+  interimContainer.oncontextmenu = (e) => {
+    if (isKeyboardMode) return;
+    e.preventDefault();
+  };
 
   interimContainer.style.cursor = "pointer";
   interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC】左クリック:確定 / 右クリック:消去";
+
+  // ============================================================
+  // ★ キーボード入力モード
+  // ============================================================
+  let isKeyboardMode = false;
+  const btnKeyboard = document.getElementById('btn-keyboard');
+
+  function enterKeyboardMode() {
+    isKeyboardMode = true;
+
+    // 音声認識を一時停止（isListeningフラグは維持）
+    if (recognition) {
+      recognition.onend = null;
+      try { recognition.stop(); } catch(e) {}
+    }
+
+    // 暫定エリアを編集可能に
+    interimContainer.contentEditable = "true";
+    interimContainer.classList.add('keyboard-mode');
+    interimContainer.style.cursor = "text";
+    interimContainer.title = "入力 → Enter で確定・翻訳 / Esc でキャンセル / Shift+Enter で改行";
+
+    btnKeyboard.classList.add('active');
+    btnKeyboard.title = "クリックで音声モードに戻る";
+
+    statusDot.textContent = "EDIT";
+    statusDot.style.color = "#00ff88";
+
+    // カーソルを末尾に移動してフォーカス
+    interimContainer.focus();
+    const range = document.createRange();
+    const sel   = window.getSelection();
+    range.selectNodeContents(interimContainer);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function exitKeyboardMode(shouldResume) {
+    isKeyboardMode = false;
+
+    interimContainer.contentEditable = "false";
+    interimContainer.classList.remove('keyboard-mode');
+    interimContainer.style.cursor = "pointer";
+    interimContainer.title = "【スマホ】1本指:確定 / 2本指:消去 | 【PC】左クリック:確定 / 右クリック:消去";
+    interimContainer.blur();
+
+    btnKeyboard.classList.remove('active');
+    btnKeyboard.title = "⌨ キーボード入力モード（音声停止・手入力）";
+
+    if (shouldResume && isListening) {
+      statusDot.textContent = "READY";
+      statusDot.style.color = "#aaa";
+      setTimeout(() => { initRecognition(); }, 100);
+    }
+  }
+
+  btnKeyboard.onclick = () => {
+    if (!isKeyboardMode) {
+      enterKeyboardMode();
+    } else {
+      currentText = interimContainer.textContent.trim();
+      exitKeyboardMode(true);
+    }
+  };
+
+  // ============================================================
+  // ★ 確定ログ編集
+  // ============================================================
+  // ダブルクリックからのエントリポイント（orig-text要素を受け取る）
+  window.startLogEditFromDblClick = function(origEl) {
+    const row = origEl.closest('.log-item');
+    if (!row) return;
+    const tl = row.dataset.tl || selOut.value;
+    const sl = row.dataset.sl || selIn.value;
+    startLogEdit(row, tl, sl);
+  };
+
+  function startLogEdit(row, tl, sl) {
+    // 他の編集中ログがあればまず再翻訳確定
+    document.querySelectorAll('.log-item.editing').forEach(r => {
+      if (r !== row) commitLogEdit(r, r.dataset.tl || selOut.value, r.dataset.sl || selIn.value);
+    });
+
+    row.classList.add('editing');
+    const origEl = row.querySelector('.orig-text');
+    origEl.contentEditable = "true";
+    origEl.focus();
+
+    // カーソルを末尾に
+    const range = document.createRange();
+    const sel   = window.getSelection();
+    range.selectNodeContents(origEl);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    // Enterで再翻訳、Escでキャンセル
+    origEl._keyHandler = (e) => {
+      if (e.code === 'Space') e.stopPropagation(); // スペースキーがON/OFFと衝突しないよう
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        commitLogEdit(row, tl, sl);
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        cancelLogEdit(row);
+      }
+    };
+    origEl.addEventListener('keydown', origEl._keyHandler);
+
+    // ★ 枠外クリック/タップで再翻訳（150ms遅延でボタン競合を回避）
+    origEl._blurHandler = () => {
+      setTimeout(() => {
+        if (row.classList.contains('editing')) {
+          commitLogEdit(row, tl, sl);
+        }
+      }, 150);
+    };
+    origEl.addEventListener('blur', origEl._blurHandler);
+  }
+
+  function cancelLogEdit(row) {
+    row.classList.remove('editing');
+    const origEl = row.querySelector('.orig-text');
+    origEl.contentEditable = "false";
+    if (origEl._keyHandler) {
+      origEl.removeEventListener('keydown', origEl._keyHandler);
+      delete origEl._keyHandler;
+    }
+    if (origEl._blurHandler) {
+      origEl.removeEventListener('blur', origEl._blurHandler);
+      delete origEl._blurHandler;
+    }
+  }
+
+  async function commitLogEdit(row, tl, sl) {
+    if (!row.classList.contains('editing')) return; // 二重呼び出し防止
+    const origEl   = row.querySelector('.orig-text');
+    const transEl  = row.querySelector('.trans-text');
+    const reTransEl = row.querySelector('.re-trans-text');
+
+    const newText = origEl.textContent.trim();
+
+    // 編集モードを先に解除（blurループ防止）
+    cancelLogEdit(row);
+
+    if (!newText) return;
+
+    // 翻訳中表示
+    transEl.style.opacity = "0.4";
+    transEl.innerHTML = `翻訳中... <button class="log-edit-btn" title="この行の原文を編集して再翻訳">✏️編集</button>`;
+
+    const isReTransOn = document.getElementById('check-re-trans').checked;
+    let newTrans   = newText;
+    let newReTrans = "";
+
+    if (sl !== tl) {
+      try {
+        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(newText)}`);
+        const data = await res.json();
+        newTrans = data[0].map(s => s[0]).join("");
+      } catch(e) { newTrans = "[Translation Error]"; }
+    }
+
+    if (isReTransOn && sl !== tl) {
+      try {
+        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${sl}&dt=t&q=${encodeURIComponent(newTrans)}`);
+        const data = await res.json();
+        newReTrans = data[0].map(s => s[0]).join("");
+      } catch(e) { newReTrans = "[Re-translation Error]"; }
+    }
+
+    // 翻訳結果を反映
+    transEl.style.opacity = "";
+    transEl.innerHTML = `${newTrans} <span style="font-size:0.5em; opacity:0.5; margin-left:5px;">🔊</span><button class="log-edit-btn" title="この行の原文を編集して再翻訳">✏️編集</button>`;
+    transEl.onclick = () => speakText(newTrans, tl);
+
+    // 編集ボタンを再登録
+    transEl.querySelector('.log-edit-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      startLogEdit(row, tl, sl);
+    });
+
+    // 逆翻訳を更新
+    if (reTransEl) {
+      reTransEl.textContent = newReTrans ? `↩️ ${newReTrans}` : "";
+      reTransEl.style.display = newReTrans ? "" : "none";
+    }
+
+    // origテキストを更新
+    origEl.textContent = newText;
+  }
+
+  // ============================================================
+  // キー操作（音声モード・キーボードモード共通）
+  // ============================================================
+  document.addEventListener('keydown', (e) => {
+
+    if (isKeyboardMode) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        interimContainer.textContent = "";
+        currentText = "";
+        exitKeyboardMode(true);
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const editedText = interimContainer.textContent.trim();
+        if (editedText) {
+          currentText = editedText;
+          interimContainer.textContent = "";
+          exitKeyboardMode(false);
+          commitTranslation(currentText).then(() => {
+            currentText = "";
+            if (isListening) setTimeout(() => { initRecognition(); }, 100);
+          });
+        }
+      }
+      return; // キーボードモード中は以下をスキップ
+    }
+
+    // 通常（音声）モード
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Escape') resetInterim();
+    if (e.key === 'Enter')  forceCommit();
+  });
 
   const btnHelp  = document.getElementById('btn-help');
   const modalHelp = document.getElementById('modal-help');
@@ -1023,10 +1332,18 @@ function updateUIMode() {
 
   window.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (isKeyboardMode) return;  // ★キーボードモード中はスペースキーON/OFFを無効化
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-9 変更サマリー  */
+  /* Ver.2.32-11 変更サマリー：
+     1. 確定ログ編集：✔再翻訳・✖キャンセルボタンを廃止
+        - Enter → 即再翻訳
+        - 枠外クリック/タップ（blur）→ 即再翻訳
+        - Esc → キャンセル（PC向け）
+     2. 確定ログ編集中のスペースキーが音声ON/OFFと衝突するバグを修正
+     3. 他の行を編集しようとした時、前の行を先に再翻訳確定してから次の行へ
+  */
 </script>
 </body>
 </html>
