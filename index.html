@@ -338,7 +338,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-11 (2026/5/14更新)</div>
+  <div class="footer-text">Ver.2.32-13 (2026/5/15更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -1162,10 +1162,12 @@ function updateUIMode() {
     };
     origEl.addEventListener('keydown', origEl._keyHandler);
 
-    // ★ 枠外クリック/タップで再翻訳（150ms遅延でボタン競合を回避）
+    // ★ 枠外クリック/タップで再翻訳
+    // 150ms遅延：ボタンクリック時のblur競合を回避
+    // _isCommittingフラグ：DOM更新によるblur再発火の無限ループを防止
     origEl._blurHandler = () => {
       setTimeout(() => {
-        if (row.classList.contains('editing')) {
+        if (row.classList.contains('editing') && !row._isCommitting) {
           commitLogEdit(row, tl, sl);
         }
       }, 150);
@@ -1188,17 +1190,24 @@ function updateUIMode() {
   }
 
   async function commitLogEdit(row, tl, sl) {
-    if (!row.classList.contains('editing')) return; // 二重呼び出し防止
-    const origEl   = row.querySelector('.orig-text');
-    const transEl  = row.querySelector('.trans-text');
+    // ★ 二重呼び出しを完全ブロック（blur無限ループ対策）
+    if (row._isCommitting) return;
+    if (!row.classList.contains('editing')) return;
+    row._isCommitting = true;
+
+    const origEl    = row.querySelector('.orig-text');
+    const transEl   = row.querySelector('.trans-text');
     const reTransEl = row.querySelector('.re-trans-text');
 
     const newText = origEl.textContent.trim();
 
-    // 編集モードを先に解除（blurループ防止）
+    // 編集モードを先に解除（blurハンドラもここで削除される）
     cancelLogEdit(row);
 
-    if (!newText) return;
+    if (!newText) {
+      row._isCommitting = false;
+      return;
+    }
 
     // 翻訳中表示
     transEl.style.opacity = "0.4";
@@ -1243,6 +1252,9 @@ function updateUIMode() {
 
     // origテキストを更新
     origEl.textContent = newText;
+
+    // ★ フラグを解除（次の編集が可能になる）
+    row._isCommitting = false;
   }
 
   // ============================================================
@@ -1336,7 +1348,11 @@ function updateUIMode() {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-11 変更サマリー：
+  /* Ver.2.32-13 変更サマリー：
+     ★ クラッシュ修正：確定ログ編集の blur → commitLogEdit 無限ループを完全解消
+        - row._isCommitting フラグで二重実行を完全ブロック
+        - blurハンドラに _isCommitting チェックを追加
+        原因：枠外クリック時に blur → DOM更新 → blur再発火 → 無限ループ → クラッシュ
      1. 確定ログ編集：✔再翻訳・✖キャンセルボタンを廃止
         - Enter → 即再翻訳
         - 枠外クリック/タップ（blur）→ 即再翻訳
