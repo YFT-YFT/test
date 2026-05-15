@@ -338,7 +338,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-13 (2026/5/15更新)</div>
+  <div class="footer-text">Ver.2.32-13- (2026/5/15更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -367,8 +367,6 @@ html, body {
       <li><b>暫定エリアのリサイズ:</b> 青いラインを<b>上下にドラッグ</b>すると、暫定エリアの高さを自由に変更できます。文字サイズは変わらず行数が増えます。<b>ダブルクリック</b>でデフォルトの高さに戻ります。設定した高さはブラウザを閉じても記憶されます。</li>
       <li><b>音声読み上げ:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>するか、横の「🔊」ボタンを押すと読み上げます。<br><small style="color: #ffaa00;">※読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small></li>
       <li><b>割り込み再生:</b> 読み上げ中に別のログをタップすると、前の再生を中断して<b>新しい文章をすぐに読み上げ</b>ます。</li>
-<li><b>⌨ キーボード入力モード:</b> 「⌨」ボタンを押すと音声認識を一時停止し、暫定エリアにキーボードで直接入力できます。声を出せない場面や、音声認識がうまくいかない時に便利です。<b>Enter</b>で確定・翻訳し、自動的に音声モードへ戻ります。<b>Esc</b>でキャンセルします。</li>
-      <li><b>確定ログの編集・再翻訳:</b> 確定ログの原文部分を<b>ダブルクリック</b>、またはログ横の<b>「✏️編集」ボタン</b>を押すと原文を修正できます。<b>Enter</b>または<b>編集エリア外をクリック/タップ</b>すると即座に再翻訳されてその場で反映されます。<b>Esc</b>でキャンセルします。</li>
     </ul>
   </div>
 
@@ -814,6 +812,7 @@ function updateUIMode() {
     recognition.interimResults = true;
     
     recognition.onresult = async e => {
+      if (isKeyboardMode) return;  // ★キーボードモード中は音声認識結果を完全無視
       lastSpeechTime = Date.now();
       statusDot.textContent = "LIVE"; 
       statusDot.style.color = "red";
@@ -1356,13 +1355,10 @@ function updateUIMode() {
      ★ クラッシュ修正：確定ログ編集の blur → commitLogEdit 無限ループを完全解消
         - row._isCommitting フラグで二重実行を完全ブロック
         - blurハンドラに _isCommitting チェックを追加
-        原因：枠外クリック時に blur → DOM更新 → blur再発火 → 無限ループ → クラッシュ
-     ★ 2重確定バグ修正：キーボードモードでEnter後に確定ログが2つ入る問題を修正
-        - onresult の isFinalResult 処理にキーボードモードガードを追加
-     1. 確定ログ編集：✔再翻訳・✖キャンセルボタンを廃止
-        - Enter → 即再翻訳
-        - 枠外クリック/タップ（blur）→ 即再翻訳
-        - Esc → キャンセル（PC向け）
+     ★ 2重確定バグ修正（完全版）：キーボードモードでEnter後に確定ログが2つ入る問題
+        - onresult の冒頭に isKeyboardMode ガードを追加（根本対策）
+        - isFinalResult 処理にも isKeyboardMode ガードを追加（二重対策）
+     1. 確定ログ編集：Enter・枠外クリック/タップで即再翻訳
      2. 確定ログ編集中のスペースキーが音声ON/OFFと衝突するバグを修正
      3. 他の行を編集しようとした時、前の行を先に再翻訳確定してから次の行へ
   */
