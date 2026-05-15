@@ -338,7 +338,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-13 (2026/5/15更新)</div>
+  <div class="footer-text">Ver.2.32-14 (2026/5/15更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -1278,13 +1278,19 @@ function updateUIMode() {
         e.preventDefault();
         const editedText = interimContainer.textContent.trim();
         if (editedText) {
-          currentText = editedText;
+          // ★ テキストをローカルに退避してからモード解除
+          const textToCommit = editedText;
+          currentText = "";
           interimContainer.textContent = "";
           exitKeyboardMode(false);
-          commitTranslation(currentText).then(() => {
-            currentText = "";
-            if (isListening) setTimeout(() => { initRecognition(); }, 100);
-          });
+          // ★ 200ms待つ：exitKeyboardMode後に音声認識キューが
+          //    吐き出されてもisKeyboardMode=falseですり抜けないよう
+          //    キューが空になってからcommitする
+          setTimeout(() => {
+            commitTranslation(textToCommit).then(() => {
+              if (isListening) setTimeout(() => { initRecognition(); }, 100);
+            });
+          }, 200);
         }
       }
       return; // キーボードモード中は以下をスキップ
@@ -1353,16 +1359,18 @@ function updateUIMode() {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-13 変更サマリー：
-     ★ クラッシュ修正：確定ログ編集の blur → commitLogEdit 無限ループを完全解消
-        - row._isCommitting フラグで二重実行を完全ブロック
-        - blurハンドラに _isCommitting チェックを追加
-     ★ 2重確定バグ修正（完全版）：キーボードモードでEnter後に確定ログが2つ入る問題
-        - onresult の冒頭に isKeyboardMode ガードを追加（根本対策）
-        - isFinalResult 処理にも isKeyboardMode ガードを追加（二重対策）
-     1. 確定ログ編集：Enter・枠外クリック/タップで即再翻訳
-     2. 確定ログ編集中のスペースキーが音声ON/OFFと衝突するバグを修正
-     3. 他の行を編集しようとした時、前の行を先に再翻訳確定してから次の行へ
+  /* Ver.2.32-14 変更サマリー：
+     ★ 2重確定バグ完全修正：キーボードモードEnter後に確定ログが2つ入る問題
+        【根本原因】exitKeyboardMode()でisKeyboardMode=falseになった直後に
+                   音声認識キューが吐き出されてonresultがすり抜けていた
+        【対策】Enter確定時にテキストをローカル変数に退避し、
+                exitKeyboardMode()後200ms待ってからcommitTranslation()を呼ぶ
+                → キューが空になってから確定するので2重にならない
+     （Ver.2.32-13からの継続）
+     - blur無限ループクラッシュ修正（_isCommittingフラグ）
+     - onresult冒頭・isFinalResult・watchdogの3重isKeyboardModeガード
+     - 確定ログ編集：Enter・枠外クリック/タップで即再翻訳
+     - 確定ログ編集中スペースキー衝突バグ修正
   */
 </script>
 </body>
