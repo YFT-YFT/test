@@ -338,7 +338,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-14 (2026/5/15更新)</div>
+  <div class="footer-text">Ver.2.32-15 (2026/5/16更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -775,18 +775,23 @@ function updateUIMode() {
     }
   }
 
+  let mediaStream = null; // ★ マイク完全解放用
+
   async function startAudioMonitor() {
     if (audioContext) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true }); // ★ 保存
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
+      const source = audioContext.createMediaStreamSource(mediaStream);
       source.connect(analyser);
       analyser.fftSize = 256;
       dataArray = new Uint8Array(analyser.frequencyBinCount);
       const draw = () => {
-        if (!isListening) return;
+        if (!isListening) {
+          animationId = null;
+          return;
+        }
         analyser.getByteFrequencyData(dataArray);
         let sum = 0; for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
         let volume = Math.min(100, (sum / dataArray.length) * 2.5);
@@ -805,6 +810,9 @@ function updateUIMode() {
     setTimeout(() => { if (isListening) initRecognition(); }, 50);
   }
 
+  // ★ 暫定訳の並列fetch暴走防止フラグ
+  let isTranslatingInterim = false;
+
   function initRecognition() {
     const Speech = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!Speech) return;
@@ -814,7 +822,7 @@ function updateUIMode() {
     recognition.interimResults = true;
     
     recognition.onresult = async e => {
-      if (isKeyboardMode) return;  // ★キーボードモード中は音声認識結果を完全無視
+      if (isKeyboardMode) return;
       lastSpeechTime = Date.now();
       statusDot.textContent = "LIVE"; 
       statusDot.style.color = "red";
@@ -833,19 +841,28 @@ function updateUIMode() {
       const checkInterim = document.getElementById('check-interim-trans').checked;
       
       if (checkInterim) {
-        const tl = selOut.value;
-        try {
-          const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`);
-          const data = await res.json();
-          const trans = data[0].map(s => s[0]).join("");
-          interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
-        } catch(e) { interimContainer.textContent = currentText; }
-     } else {
-  interimContainer.innerHTML = `<span class="interim-trans">${currentText}</span>`;
-}
+        // ★ 前の翻訳が終わっていない場合はスキップ（並列fetch防止）
+        if (!isTranslatingInterim) {
+          isTranslatingInterim = true;
+          const tl = selOut.value;
+          try {
+            const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`);
+            const data = await res.json();
+            const trans = data[0].map(s => s[0]).join("");
+            interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
+          } catch(e) {
+            interimContainer.textContent = currentText;
+          } finally {
+            isTranslatingInterim = false; // ★ 成功・失敗どちらでも必ず解放
+          }
+        }
+      } else {
+        interimContainer.innerHTML = `<span class="interim-trans">${currentText}</span>`;
+      }
 
       if (isFinalResult) {
-        if (!isKeyboardMode) {  // ★キーボードモード中は音声側の自動確定をスキップ
+        if (!isKeyboardMode) {
+          isTranslatingInterim = false; // ★ 確定時にフラグをリセット
           commitTranslation(currentText);
           currentText = "";
           interimContainer.textContent = "";
@@ -868,11 +885,13 @@ function updateUIMode() {
 
   function startWatchdog() {
     clearInterval(watchdogInterval);
+    // watchdog: 100ms（元の値に戻す。250msは復帰感に影響するため）
     watchdogInterval = setInterval(() => {
       if (!isListening) return;
       const now = Date.now();
       const splitLimit = (parseFloat(splitSecInput.value) || 1.0) * 1000;
       if (currentText && !isKeyboardMode && (now - lastSpeechTime > splitLimit)) {
+        isTranslatingInterim = false; // ★ watchdog確定時もフラグをリセット
         commitTranslation(currentText);
         currentText = ""; interimContainer.textContent = "";
         restartRecognition();
@@ -935,7 +954,19 @@ function updateUIMode() {
 
     logContainer.prepend(row);
     chatLog.push(`${getTimestamp()}\t${text}\t${trans}\t${reTrans || ""}`);
-    while (logContainer.children.length > 50) logContainer.lastChild.remove();
+    // ★ 上限超過時はremoveする前にイベントリスナーを解放
+    while (logContainer.children.length > 50) {
+      const old = logContainer.lastChild;
+      if (old) {
+        // contentEditableになっている場合のリスナー解放
+        const oldOrig = old.querySelector('.orig-text');
+        if (oldOrig) {
+          if (oldOrig._keyHandler)  { oldOrig.removeEventListener('keydown', oldOrig._keyHandler); delete oldOrig._keyHandler; }
+          if (oldOrig._blurHandler) { oldOrig.removeEventListener('blur',    oldOrig._blurHandler); delete oldOrig._blurHandler; }
+        }
+        logContainer.removeChild(old);
+      }
+    }
   }
 
   function getTimestamp() {
@@ -981,13 +1012,19 @@ function updateUIMode() {
       autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
     } else {
       if (currentText) commitTranslation(currentText);
-      isListening = false; 
+      isListening = false;
+      isTranslatingInterim = false; // ★ 停止時にフラグをリセット
       clearInterval(autoSaveTimer); 
       clearInterval(watchdogInterval);
       if (recognition) { recognition.onend = null; recognition.stop(); }
-      if (animationId) cancelAnimationFrame(animationId);
+      if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
       if (audioContext) {
         audioContext.close().then(() => { audioContext = null; });
+      }
+      // ★ マイクトラックを完全停止（ブラウザのマイクアイコンも消える）
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
       }
       saveLogFile();
       statusDot.textContent = "STOPPED";
@@ -1311,6 +1348,8 @@ function updateUIMode() {
   let currentUtterance = null;
   function speakText(text, lang) {
     window.speechSynthesis.cancel();
+    // ★ utterancesの無限増加を防止（参照を保持しない）
+    currentUtterance = null;
     setTimeout(() => {
       const uttr = new SpeechSynthesisUtterance();
       uttr.text  = text;
@@ -1327,8 +1366,7 @@ function updateUIMode() {
       uttr.pitch = parseFloat(document.getElementById('pitch-slider').value) || 1.0;
       currentUtterance = uttr;
       uttr.onend = () => { currentUtterance = null; };
-      window.utterances = window.utterances || [];
-      window.utterances.push(uttr);
+      // ★ window.utterances への蓄積を廃止（メモリリーク防止）
       window.speechSynthesis.speak(uttr);
     }, 100);
   }
@@ -1359,18 +1397,20 @@ function updateUIMode() {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-14 変更サマリー：
-     ★ 2重確定バグ完全修正：キーボードモードEnter後に確定ログが2つ入る問題
-        【根本原因】exitKeyboardMode()でisKeyboardMode=falseになった直後に
-                   音声認識キューが吐き出されてonresultがすり抜けていた
-        【対策】Enter確定時にテキストをローカル変数に退避し、
-                exitKeyboardMode()後200ms待ってからcommitTranslation()を呼ぶ
-                → キューが空になってから確定するので2重にならない
-     （Ver.2.32-13からの継続）
-     - blur無限ループクラッシュ修正（_isCommittingフラグ）
-     - onresult冒頭・isFinalResult・watchdogの3重isKeyboardModeガード
-     - 確定ログ編集：Enter・枠外クリック/タップで即再翻訳
-     - 確定ログ編集中スペースキー衝突バグ修正
+  /* Ver.2.32-15 変更サマリー：長時間安定性の総合対策
+     ★ ①メモリリーク修正：window.utterances への無限蓄積を廃止
+        → 読み上げのたびにオブジェクトが積まれクラッシュする問題を解消
+        → ver.2.32-2以降に追加されたコードが原因（確認済み）
+     ★ ②並列fetch暴走防止：isTranslatingInterimフラグで暫定訳fetchを直列化
+        → 発話中に大量のPromiseが並列起動しメモリを食い潰す問題を解消
+     ★ ③watchdog：100msに戻す
+        → watchdog自体はクラッシュ要因でないことをテストで確認
+        → 250msへの変更は復帰感に悪影響のため元に戻した
+     ★ ④ログ削除時のリスナー解放：50件超過時に古いログのリスナーを明示的に削除
+        → DOMから切り離されたノードがメモリに残り続ける問題を解消
+     ★ ⑤mediaStream完全解放：停止時にgetTracks().forEach(track=>track.stop())追加
+        → マイクが解放されずブラウザに占有され続ける問題を解消
+     ★ ⑥drawループ確実停止：animationId=nullで停止を明示管理
   */
 </script>
 </body>
