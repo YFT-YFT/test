@@ -338,7 +338,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-15 (2026/5/16更新)</div>
+  <div class="footer-text">Ver.2.32-15.5 (2026/5/16更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -1021,11 +1021,12 @@ function updateUIMode() {
       if (audioContext) {
         audioContext.close().then(() => { audioContext = null; });
       }
+      /* 以下のマイク完全停止処理をあえてコメントアウトして無効化する */
       // ★ マイクトラックを完全停止（ブラウザのマイクアイコンも消える）
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-        mediaStream = null;
-      }
+      //if (mediaStream) {
+       // mediaStream.getTracks().forEach(track => track.stop());
+       // mediaStream = null;
+      //}
       saveLogFile();
       statusDot.textContent = "STOPPED";
       statusDot.style.color = "#aaa";
