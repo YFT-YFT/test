@@ -82,6 +82,26 @@ html, body {
       scroll-snap-align: start;
     }
 
+    /* ★ 🗑 ログ消去ボタン */
+    #btn-clear-log {
+      background: #442222;
+      color: #ff8888;
+      border: 1px solid #664444;
+      padding: 0 8px;
+      height: 32px;
+      font-size: 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      position: sticky;
+      right: 138px;
+      z-index: 98;
+      box-shadow: -8px 0 16px rgba(0,0,0,0.8);
+      transition: background 0.2s;
+    }
+    #btn-clear-log:hover { background: #662222; color: #ffaaaa; }
+
     #btn-help { 
       background: linear-gradient(135deg, #ff33ff 0%, #cc00cc 100%) !important;
       color: #fff !important;
@@ -327,6 +347,7 @@ html, body {
     高:<input type="range" id="pitch-slider" min="0.5" max="2.0" step="0.1" value="1.0" style="width:60px">
   </div>
   
+  <button id="btn-clear-log" title="確定ログを消去">🗑</button>
   <button id="btn-help">使い方</button>
 </div>
 
@@ -338,7 +359,7 @@ html, body {
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-15.5 (2026/5/16更新)</div>
+  <div class="footer-text">Ver.2.32-17 (2026/5/18更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -353,7 +374,9 @@ html, body {
       <li><b>開始:</b> 青色の「同時翻訳開始」ボタンをクリックし、ブラウザのマイクの使用を許可してください。</li>
       <li><b>発話:</b> 画面に向かって話すと、上部の青枠（暫定ボックス）に文字が溜まり、無音を検知すると下部に確定ログとして出力されます。</li>
       <li><b>暫定訳機能:</b> 「暫定訳」にチェックを入れると、確定前の青枠内でもリアルタイムに翻訳結果を表示します。</li>
-      <li><b>終了・保存:</b> 「ログ名:」を入力している場合、「停止」ボタンを押すと、ログがテキストファイルとして自動保存されます。</li>
+      <li><b>一時停止と再開:</b> 「一時停止」ボタンを押すと音声認識が止まりますが、<b>確定ログはそのまま残ります。</b>再度「同時翻訳開始」を押すと、ログを引き継いだまま認識が再開されます。マイクの切り替えや言語変更の際にも安心して使えます。</li>
+      <li><b>ログの消去:</b> ヘッダーの「🗑」ボタンを押すと確定ログを手動で消去できます。ページを再読み込み（F5）しても消去されます。</li>
+      <li><b>保存:</b> 「ログ名:」を入力している場合、「一時停止」ボタンを押すと、その時点のログがテキストファイルとして自動保存されます。</li>
     </ul>
   </div>
 
@@ -363,12 +386,13 @@ html, body {
       <li><b>言語のクイック入れ替え:</b> 上部バーの<b>「⇄」ボタン</b>を押すと、言語設定を瞬時に入れ替えることができます。双方向のやり取りに便利です。</li>
       <li><b>発話の強制確定（即時ログ出力）:</b> 無音（分割秒数）を待たずに、現在の入力をすぐにログへ出力したい時は、上部の青枠を<b>「左クリック」</b>、<b>「1本指でタップ」</b>、またはキーボードの<b>「Enterキー」</b>を押してください。</li>
       <li><b>発話のリセット（キャンセル）:</b> 言い間違えた時は、確定前に上部の青枠を<b>「右クリック」</b>、<b>「2本指でタップ」</b>、または<b>「Escキー」</b>を押してください。</li>
-      <li><b>スペースキーで開始/停止:</b> キーボードの<b>スペースキー</b>を押すと、「同時翻訳開始」「停止」をすばやく切り替えられます。ただし、入力欄にカーソルがある時は無効です。</li>
       <li><b>暫定エリアのリサイズ:</b> 青いラインを<b>上下にドラッグ</b>すると、暫定エリアの高さを自由に変更できます。文字サイズは変わらず行数が増えます。<b>ダブルクリック</b>でデフォルトの高さに戻ります。設定した高さはブラウザを閉じても記憶されます。</li>
       <li><b>音声読み上げ:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>するか、横の「🔊」ボタンを押すと読み上げます。<br><small style="color: #ffaa00;">※読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small></li>
       <li><b>割り込み再生:</b> 読み上げ中に別のログをタップすると、前の再生を中断して<b>新しい文章をすぐに読み上げ</b>ます。</li>
 <li><b>⌨ キーボード入力モード:</b> 「⌨」ボタンを押すと音声認識を一時停止し、暫定エリアにキーボードで直接入力できます。声を出せない場面や、音声認識がうまくいかない時に便利です。<b>Enter</b>で確定・翻訳し、自動的に音声モードへ戻ります。<b>Esc</b>でキャンセルします。</li>
       <li><b>確定ログの編集・再翻訳:</b> 確定ログの原文部分を<b>ダブルクリック</b>、またはログ横の<b>「✏️編集」ボタン</b>を押すと原文を修正できます。<b>Enter</b>または<b>編集エリア外をクリック/タップ</b>すると即座に再翻訳されてその場で反映されます。<b>Esc</b>でキャンセルします。</li>
+      <li><b>🗑 ログ消去:</b> ヘッダーの「🗑」ボタンを押すと確定ログをすべて消去できます。保存済みのファイルには影響しません。</li>
+      <li><b>スペースキーで開始/一時停止:</b> キーボードの<b>スペースキー</b>を押すと、「同時翻訳開始」「一時停止」をすばやく切り替えられます。ただし、入力欄にカーソルがある時は無効です。</li>
     </ul>
   </div>
 
@@ -413,12 +437,17 @@ html, body {
   </div>
 
   <div class="help-section">
-    <h3>7. 利用上の注意点と対応ブラウザ（重要）</h3>
+    <h3>7. 利用上の注意点と対応ブラウザ・OS（重要）</h3>
     <ul>
-      <li><b>◎ 動作確認済み:</b> <b>Google Chrome / Microsoft Edge</b>（最も安定して動作します）</li>
-      <li><b>△ 条件付き動作:</b> <b>Safari (iPhone/Mac)</b>（長時間使用時に認識が止まりやすい傾向があります）</li>
-      <li><b>× 非対応:</b> <b>Vivaldi / Brave / Opera / Firefox</b>等（音声認識サーバーの利用権が含まれていないため動作しません）</li>
-      <li><b>マイク品質:</b> 精度はマイクに依存します。静かな環境での使用や外付けマイクの使用を推奨します。</li>
+      <li><b>◎ 最推奨:</b> <b>Google Chrome（Windows / Mac / Chromebook）</b><br>
+      最も安定して動作します。特にChromebookのGoogle Chromeは長時間使用でも安定性が高く、最もおすすめの環境です。</li>
+      <li><b>○ 動作確認済み:</b> <b>Microsoft Edge（Windows 11）</b><br>
+      基本的に動作しますが、EdgeはChromeと比べてWeb Speech APIのメモリ管理が異なるため、長時間使用や読み上げ機能（🔊）を多用する場合にブラウザが重くなる場合があります。長時間使用時はこまめにページを再読み込み（F5）することで安定します。</li>
+      <li><b>△ 条件付き動作:</b> <b>Safari（iPhone / Mac）</b><br>
+      短時間の使用では動作しますが、長時間使用時に音声認識が止まりやすい傾向があります。iPhoneでの使用は特に注意してください。</li>
+      <li><b>× 非対応:</b> <b>Vivaldi / Brave / Opera / Firefox</b>等<br>
+      音声認識サーバーへのアクセス権が含まれていないため動作しません。</li>
+      <li><b>マイク品質:</b> 認識精度はマイクに依存します。静かな環境での使用や外付けマイクの使用を推奨します。</li>
       <li><b>文字化け対策:</b> 本ソフトは「BOM付きUTF-8」で保存します。Excel等でそのまま開いても文字化けしにくい仕様です。</li>
     </ul>
   </div>
@@ -805,8 +834,14 @@ function updateUIMode() {
 
   function restartRecognition() {
     if (!recognition) return;
-    recognition.onend = null; recognition.onresult = null;
-    try { recognition.stop(); } catch(e) {}
+    // ★ 古いインスタンスのハンドラを全解除してからGCに渡す
+    recognition.onstart   = null;
+    recognition.onend     = null;
+    recognition.onresult  = null;
+    recognition.onerror   = null;
+    recognition.onspeechend = null;
+    try { recognition.abort(); } catch(e) {} // stopより強制的に終了
+    recognition = null; // ★ 参照を明示的に切る（GCを促す）
     setTimeout(() => { if (isListening) initRecognition(); }, 50);
   }
 
@@ -816,6 +851,13 @@ function updateUIMode() {
   function initRecognition() {
     const Speech = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!Speech) return;
+    if (recognition) {
+      // ★ 念のため既存インスタンスを確実に破棄してから新規作成
+      recognition.onstart = recognition.onend = recognition.onresult = 
+      recognition.onerror = recognition.onspeechend = null;
+      try { recognition.abort(); } catch(e) {}
+      recognition = null;
+    }
     recognition = new Speech();
     recognition.lang = selIn.value;
     recognition.continuous = true;
@@ -845,15 +887,19 @@ function updateUIMode() {
         if (!isTranslatingInterim) {
           isTranslatingInterim = true;
           const tl = selOut.value;
+          // ★ AbortControllerで3秒タイムアウト（暫定訳は次の結果がすぐ来るため短めに）
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 3000);
           try {
-            const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`);
+            const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`, { signal: ctrl.signal });
             const data = await res.json();
             const trans = data[0].map(s => s[0]).join("");
             interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
           } catch(e) {
-            interimContainer.textContent = currentText;
+            if (e.name !== 'AbortError') interimContainer.textContent = currentText;
           } finally {
-            isTranslatingInterim = false; // ★ 成功・失敗どちらでも必ず解放
+            clearTimeout(t);
+            isTranslatingInterim = false;
           }
         }
       } else {
@@ -913,19 +959,26 @@ function updateUIMode() {
     let reTrans = "";
 
     if (sl !== tl) {
+      // ★ AbortControllerで5秒タイムアウト（応答なしのfetchが積み上がるのを防ぐ）
+      const ctrl1 = new AbortController();
+      const t1 = setTimeout(() => ctrl1.abort(), 5000);
       try {
-        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`);
+        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`, { signal: ctrl1.signal });
         const data = await res.json();
         trans = data[0].map(s => s[0]).join("");
-      } catch(e) { trans = "[Translation Error]"; }
+      } catch(e) { trans = e.name === 'AbortError' ? text : "[Translation Error]"; }
+      finally { clearTimeout(t1); }
     }
 
     if (isReTransOn && sl !== tl) {
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 5000);
       try {
-        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${sl}&dt=t&q=${encodeURIComponent(trans)}`);
+        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${sl}&dt=t&q=${encodeURIComponent(trans)}`, { signal: ctrl2.signal });
         const data = await res.json();
         reTrans = data[0].map(s => s[0]).join("");
-      } catch(e) { reTrans = "[Re-translation Error]"; }
+      } catch(e) { reTrans = e.name === 'AbortError' ? "" : "[Re-translation Error]"; }
+      finally { clearTimeout(t2); }
     }
 
     const row = document.createElement("div");
@@ -1000,14 +1053,16 @@ function updateUIMode() {
   btnToggle.onclick = () => {
     if (!isListening) {
       isListening = true; 
-      chatLog = []; 
-      logContainer.innerHTML = ""; 
+      // ★ 変更①②：開始時にログをクリアしない（一時停止→再開の概念）
+      // chatLog = [];        ← 削除（引き継ぐ）
+      // logContainer.innerHTML = ""; ← 削除（引き継ぐ）
       interimContainer.textContent = "";
       lastSpeechTime = Date.now();
       startAudioMonitor(); 
       initRecognition(); 
       startWatchdog();
-      btnToggle.textContent = "停止"; 
+      // ★ 変更④：「停止」→「一時停止」に変更
+      btnToggle.textContent = "一時停止"; 
       btnToggle.style.background = "#cc0000";
       autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
     } else {
@@ -1016,7 +1071,12 @@ function updateUIMode() {
       isTranslatingInterim = false; // ★ 停止時にフラグをリセット
       clearInterval(autoSaveTimer); 
       clearInterval(watchdogInterval);
-      if (recognition) { recognition.onend = null; recognition.stop(); }
+      if (recognition) { 
+        recognition.onstart = recognition.onend = recognition.onresult = 
+        recognition.onerror = recognition.onspeechend = null;
+        try { recognition.abort(); } catch(e) {}
+        recognition = null; // ★ 参照を切る
+      }
       if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
       if (audioContext) {
         audioContext.close().then(() => { audioContext = null; });
@@ -1345,6 +1405,23 @@ function updateUIMode() {
   btnHelp.onclick = () => {
     modalHelp.style.display = (modalHelp.style.display === 'block') ? 'none' : 'block';
   };
+
+  // ★ 変更③：🗑 ログ手動消去ボタン
+  document.getElementById('btn-clear-log').onclick = () => {
+    if (logContainer.children.length === 0 && chatLog.length === 0) return;
+    if (confirm('確定ログをすべて消去しますか？\n（保存済みのファイルには影響しません）')) {
+      // イベントリスナーを解放してからDOMを削除
+      Array.from(logContainer.children).forEach(old => {
+        const oldOrig = old.querySelector('.orig-text');
+        if (oldOrig) {
+          if (oldOrig._keyHandler)  { oldOrig.removeEventListener('keydown', oldOrig._keyHandler); delete oldOrig._keyHandler; }
+          if (oldOrig._blurHandler) { oldOrig.removeEventListener('blur',    oldOrig._blurHandler); delete oldOrig._blurHandler; }
+        }
+      });
+      logContainer.innerHTML = "";
+      chatLog = [];
+    }
+  };
   
   let currentUtterance = null;
   function speakText(text, lang) {
@@ -1398,20 +1475,17 @@ function updateUIMode() {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-15 変更サマリー：長時間安定性の総合対策
-     ★ ①メモリリーク修正：window.utterances への無限蓄積を廃止
-        → 読み上げのたびにオブジェクトが積まれクラッシュする問題を解消
-        → ver.2.32-2以降に追加されたコードが原因（確認済み）
-     ★ ②並列fetch暴走防止：isTranslatingInterimフラグで暫定訳fetchを直列化
-        → 発話中に大量のPromiseが並列起動しメモリを食い潰す問題を解消
-     ★ ③watchdog：100msに戻す
-        → watchdog自体はクラッシュ要因でないことをテストで確認
-        → 250msへの変更は復帰感に悪影響のため元に戻した
-     ★ ④ログ削除時のリスナー解放：50件超過時に古いログのリスナーを明示的に削除
-        → DOMから切り離されたノードがメモリに残り続ける問題を解消
-     ★ ⑤mediaStream完全解放：停止時にgetTracks().forEach(track=>track.stop())追加
-        → マイクが解放されずブラウザに占有され続ける問題を解消
-     ★ ⑥drawループ確実停止：animationId=nullで停止を明示管理
+  /* Ver.2.32-17 変更サマリー：一時停止機能・ログ手動消去・Edge対策継続
+     ★ 一時停止機能：開始時にログをクリアしない設計に変更
+        - 「停止」→「一時停止」に変更
+        - 開始時の chatLog=[] と logContainer.innerHTML="" を削除
+        - 停止→再開でログが引き継がれる
+     ★ 🗑ログ消去ボタン：ヘッダーに追加（手動クリア）
+        - リスナーを明示解放してからDOMを削除
+     （Ver.2.32-16からの継続）
+     ★ recognitionインスタンス完全破棄（Edge固有クラッシュ対策）
+     ★ fetchにAbortControllerタイムアウト管理
+     ★ utterances無限蓄積廃止・並列fetch防止・リスナー解放・mediaStream解放
   */
 </script>
 </body>
