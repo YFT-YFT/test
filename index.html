@@ -82,25 +82,45 @@ html, body {
       scroll-snap-align: start;
     }
 
-    /* ★ 🗑 ログ消去ボタン */
-    #btn-clear-log {
-      background: #442222;
-      color: #ff8888;
-      border: 1px solid #664444;
-      padding: 0 8px;
-      height: 32px;
-      font-size: 15px;
-      border-radius: 4px;
-      cursor: pointer;
+    /* ★ resize-rowラッパー：青いラインと🗑ボタンを横並びに */
+    #resize-row {
+      display: flex;
+      align-items: center;
       flex-shrink: 0;
-      white-space: nowrap;
-      position: sticky;
-      right: 138px;
-      z-index: 98;
-      box-shadow: -8px 0 16px rgba(0,0,0,0.8);
-      transition: background 0.2s;
+      margin-bottom: 10px;
     }
-    #btn-clear-log:hover { background: #662222; color: #ffaaaa; }
+
+    #resize-handle {
+      flex-grow: 1;          /* 残りの幅をすべて使う */
+      height: 6px;
+      background: #0066ff;
+      cursor: ns-resize;
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+    #resize-handle:hover,
+    #resize-handle.dragging {
+      background: #4499ff;
+    }
+
+    /* ★ 🗑ボタン：青いラインの右端に吸い付く */
+    #btn-clear-log {
+      flex-shrink: 0;
+      background: transparent;
+      color: #555;
+      border: none;
+      padding: 0 6px;
+      height: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 3px;
+      line-height: 1;
+      transition: color 0.2s, background 0.2s;
+    }
+    #btn-clear-log:hover {
+      color: #ff6666;
+      background: rgba(255,80,80,0.1);
+    }
 
     #btn-help { 
       background: linear-gradient(135deg, #ff33ff 0%, #cc00cc 100%) !important;
@@ -163,25 +183,6 @@ html, body {
       box-sizing: border-box;
     }
 
-    /* =====================================================
-       ★ ドラッグバー（青いライン）
-       - 青いボーダーをここに集約
-       - カーソルを ns-resize に変更してドラッグ可能と示す
-       ===================================================== */
-    #resize-handle {
-      height: 6px;              /* クリック領域を確保するため少し太く */
-      flex-shrink: 0;
-      background: #0066ff;      /* 青いライン本体 */
-      cursor: ns-resize;        /* ↕ カーソル */
-      margin-bottom: 10px;
-      border-radius: 2px;
-      position: relative;
-      transition: background 0.15s;
-    }
-    #resize-handle:hover,
-    #resize-handle.dragging {
-      background: #4499ff;      /* ホバー時に明るく */
-    }
     /* ドラッグ中にテキスト選択が起きないようにする */
     body.resizing {
       user-select: none;
@@ -347,19 +348,21 @@ html, body {
     高:<input type="range" id="pitch-slider" min="0.5" max="2.0" step="0.1" value="1.0" style="width:60px">
   </div>
   
-  <button id="btn-clear-log" title="確定ログを消去">🗑</button>
   <button id="btn-help">使い方</button>
 </div>
 
 <div id="display-area">
   <div id="interim-container"></div>
-  <!-- ★ 青いラインをHTMLに独立要素として配置 -->
-  <div id="resize-handle" title="ドラッグで暫定エリアの高さを変更 / ダブルクリックでリセット"></div>
+  <!-- ★ resize-handleと🗑ボタンをラッパーで横並びに -->
+  <div id="resize-row">
+    <div id="resize-handle" title="ドラッグで暫定エリアの高さを変更 / ダブルクリックでリセット"></div>
+    <button id="btn-clear-log" title="確定ログを消去（F5でも消去されます）">🗑</button>
+  </div>
   <div id="log-container"></div>
 </div>
 
 <div class="footer-info">
-  <div class="footer-text">Ver.2.32-17 (2026/5/18更新)</div>
+  <div class="footer-text">Ver.2.32-18 (2026/5/19更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -367,7 +370,33 @@ html, body {
   <h2>📖 Simultaneous_Interpreter 使い方</h2>
 
   <div class="help-section">
-    <h3>1. 基本的な使用手順</h3>
+    <h3>1. 対応ブラウザ・推奨環境（まずご確認ください）</h3>
+    <ul>
+      <li><b>◎ 最推奨:</b> <b>Google Chrome（Windows / Mac / Chromebook）</b><br>
+      最も安定して動作します。特にChromebookのGoogle Chromeは長時間使用でも安定性が高く、最もおすすめの環境です。</li>
+      <li><b>○ 動作確認済み:</b> <b>Microsoft Edge（Windows 11）</b><br>
+      基本的に動作しますが、EdgeはChromeと比べてWeb Speech APIのメモリ管理が異なるため、長時間使用や読み上げ機能（🔊）を多用する場合にブラウザが重くなることがあります。長時間使用時はこまめにページを再読み込み（F5）することで安定します。</li>
+      <li><b>△ 条件付き動作:</b> <b>Safari（iPhone / Mac）</b><br>
+      短時間の使用では動作しますが、長時間使用時に音声認識が止まりやすい傾向があります。iPhoneでの使用は特に注意してください。</li>
+      <li><b>× 非対応:</b> <b>Vivaldi / Brave / Opera / Firefox</b>等<br>
+      音声認識サーバーへのアクセス権が含まれていないため動作しません。</li>
+      <li><b>マイク品質:</b> 認識精度はマイクに依存します。静かな環境での使用や外付けマイクの使用を推奨します。</li>
+      <li><b>文字化け対策:</b> 本ソフトは「BOM付きUTF-8」で保存します。Excel等でそのまま開いても文字化けしにくい仕様です。</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>2. 想定される使用用途</h3>
+    <ul>
+      <li><b>多言語会議:</b> 海外拠点とのミーティングにおけるリアルタイム字幕。</li>
+      <li><b>高精度文字起こし:</b> 議事録作成の補助ツールとして（同言語設定で活用）。</li>
+      <li><b>対面接客:</b> 外国人観光客への窓口業務通訳ツール。</li>
+      <li><b>語学学習:</b> 発音チェックや、翻訳表現の比較学習に。</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>3. 基本的な使用手順</h3>
     <ul>
       <li><b>設定メニュー:</b> 上部バーを横にスクロールすることですべての設定メニューが表示されます。</li>
       <li><b>事前設定:</b> 上部バーで「音声（話す側）」と「翻訳（表示側）」を選択。デフォルトは日本語→中国語(簡体)です。</li>
@@ -375,29 +404,28 @@ html, body {
       <li><b>発話:</b> 画面に向かって話すと、上部の青枠（暫定ボックス）に文字が溜まり、無音を検知すると下部に確定ログとして出力されます。</li>
       <li><b>暫定訳機能:</b> 「暫定訳」にチェックを入れると、確定前の青枠内でもリアルタイムに翻訳結果を表示します。</li>
       <li><b>一時停止と再開:</b> 「一時停止」ボタンを押すと音声認識が止まりますが、<b>確定ログはそのまま残ります。</b>再度「同時翻訳開始」を押すと、ログを引き継いだまま認識が再開されます。マイクの切り替えや言語変更の際にも安心して使えます。</li>
-      <li><b>ログの消去:</b> ヘッダーの「🗑」ボタンを押すと確定ログを手動で消去できます。ページを再読み込み（F5）しても消去されます。</li>
       <li><b>保存:</b> 「ログ名:」を入力している場合、「一時停止」ボタンを押すと、その時点のログがテキストファイルとして自動保存されます。</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>2. 便利な操作・ショートカット</h3>
+    <h3>4. 便利な操作・ショートカット</h3>
     <ul>
+      <li><b>スペースキーで開始/一時停止:</b> キーボードの<b>スペースキー</b>を押すと、「同時翻訳開始」「一時停止」をすばやく切り替えられます。ただし、入力欄にカーソルがある時は無効です。</li>
       <li><b>言語のクイック入れ替え:</b> 上部バーの<b>「⇄」ボタン</b>を押すと、言語設定を瞬時に入れ替えることができます。双方向のやり取りに便利です。</li>
       <li><b>発話の強制確定（即時ログ出力）:</b> 無音（分割秒数）を待たずに、現在の入力をすぐにログへ出力したい時は、上部の青枠を<b>「左クリック」</b>、<b>「1本指でタップ」</b>、またはキーボードの<b>「Enterキー」</b>を押してください。</li>
       <li><b>発話のリセット（キャンセル）:</b> 言い間違えた時は、確定前に上部の青枠を<b>「右クリック」</b>、<b>「2本指でタップ」</b>、または<b>「Escキー」</b>を押してください。</li>
       <li><b>暫定エリアのリサイズ:</b> 青いラインを<b>上下にドラッグ</b>すると、暫定エリアの高さを自由に変更できます。文字サイズは変わらず行数が増えます。<b>ダブルクリック</b>でデフォルトの高さに戻ります。設定した高さはブラウザを閉じても記憶されます。</li>
+      <li><b>⌨ キーボード入力モード:</b> 「⌨」ボタンを押すと音声認識を一時停止し、暫定エリアにキーボードで直接入力できます。声を出せない場面や、音声認識がうまくいかない時に便利です。<b>Enter</b>で確定・翻訳し、自動的に音声モードへ戻ります。<b>Esc</b>でキャンセルします。</li>
+      <li><b>確定ログの編集・再翻訳:</b> 確定ログの原文部分を<b>ダブルクリック</b>、またはログ横の<b>「✏️編集」ボタン</b>を押すと原文を修正できます。<b>Enter</b>または<b>編集エリア外をクリック/タップ</b>すると即座に再翻訳されてその場で反映されます。<b>Esc</b>でキャンセルします。</li>
+      <li><b>🗑 ログ消去:</b> 「🗑」ボタンを押すと確定ログをすべて消去できます。保存済みのファイルには影響しません。ページの再読み込み（F5）でも消去されます。</li>
       <li><b>音声読み上げ:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>するか、横の「🔊」ボタンを押すと読み上げます。<br><small style="color: #ffaa00;">※読み上げの可否はOS（iPhone/Android等）に依存します。端末に音声データがない場合は音が出ません。</small></li>
       <li><b>割り込み再生:</b> 読み上げ中に別のログをタップすると、前の再生を中断して<b>新しい文章をすぐに読み上げ</b>ます。</li>
-<li><b>⌨ キーボード入力モード:</b> 「⌨」ボタンを押すと音声認識を一時停止し、暫定エリアにキーボードで直接入力できます。声を出せない場面や、音声認識がうまくいかない時に便利です。<b>Enter</b>で確定・翻訳し、自動的に音声モードへ戻ります。<b>Esc</b>でキャンセルします。</li>
-      <li><b>確定ログの編集・再翻訳:</b> 確定ログの原文部分を<b>ダブルクリック</b>、またはログ横の<b>「✏️編集」ボタン</b>を押すと原文を修正できます。<b>Enter</b>または<b>編集エリア外をクリック/タップ</b>すると即座に再翻訳されてその場で反映されます。<b>Esc</b>でキャンセルします。</li>
-      <li><b>🗑 ログ消去:</b> ヘッダーの「🗑」ボタンを押すと確定ログをすべて消去できます。保存済みのファイルには影響しません。</li>
-      <li><b>スペースキーで開始/一時停止:</b> キーボードの<b>スペースキー</b>を押すと、「同時翻訳開始」「一時停止」をすばやく切り替えられます。ただし、入力欄にカーソルがある時は無効です。</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>3. 表示・音声のカスタマイズ</h3>
+    <h3>5. 表示・音声のカスタマイズ</h3>
     <ul>
       <li><b>逆翻訳による精度確認:</b> 「逆翻訳」にチェックを入れると、翻訳結果をさらに自分の言語へ訳し戻して表示します。戻ってきた文が不自然な場合は、言い方を変えて再度発話することで、誤解を防ぐことができます。</li>
       <li><b>リアルタイム配色:</b> 「色」を変更すると、確定済みのログだけでなく、現在入力中の<b>「暫定訳」の色も即座に反映</b>されます。</li>
@@ -409,7 +437,7 @@ html, body {
   </div>
 
   <div class="help-section">
-    <h3>4. セキュリティと高度な文字起こし活用</h3>
+    <h3>6. セキュリティと高度な文字起こし活用</h3>
     <ul>
       <li><b>高セキュリティ文字起こし:</b> 「音声」と「翻訳」を同じ言語（例：日本→日本）に設定した場合、外部の翻訳APIサーバーへテキストを送信する処理が完全にスキップされます。これにより、情報の外部露出を極限まで抑えた<b>「高セキュリティ文字起こし専用ソフト」</b>として安心して活用いただけます。この時、字幕が1段だけの「文字起こしモード」になり、画面を広く使えます。</li>
       <li><b>情報の保護:</b> 同言語設定時は翻訳通信が発生しないため、機密性の高い会議の議事録作成ツールとして安全かつ強力に機能します。</li>
@@ -418,17 +446,7 @@ html, body {
   </div>
 
   <div class="help-section">
-    <h3>5. 想定される使用用途</h3>
-    <ul>
-      <li><b>多言語会議:</b> 海外拠点とのミーティングにおけるリアルタイム字幕。</li>
-      <li><b>高精度文字起こし:</b> 議事録作成の補助ツールとして（同言語設定で活用）。</li>
-      <li><b>対面接客:</b> 外国人観光客への窓口業務通訳ツール。</li>
-      <li><b>語学学習:</b> 発音チェックや、翻訳表現の比較学習に。</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <h3>6. スマホ・タブレットでの注意点</h3>
+    <h3>7. スマホ・タブレットでの注意点</h3>
     <ul>
       <li><b>スリープ（画面消灯）に注意:</b> 画面が消えると翻訳が中断されます。長時間使用時は端末の設定で「自動ロック」をオフにするか、定期的に画面を触ってください。</li>
       <li><b>音量設定:</b> 読み上げ（🔊）の音量は、通話音量ではなく「メディア再生音量」で調節してください。</li>
@@ -437,26 +455,11 @@ html, body {
   </div>
 
   <div class="help-section">
-    <h3>7. 利用上の注意点と対応ブラウザ・OS（重要）</h3>
-    <ul>
-      <li><b>◎ 最推奨:</b> <b>Google Chrome（Windows / Mac / Chromebook）</b><br>
-      最も安定して動作します。特にChromebookのGoogle Chromeは長時間使用でも安定性が高く、最もおすすめの環境です。</li>
-      <li><b>○ 動作確認済み:</b> <b>Microsoft Edge（Windows 11）</b><br>
-      基本的に動作しますが、EdgeはChromeと比べてWeb Speech APIのメモリ管理が異なるため、長時間使用や読み上げ機能（🔊）を多用する場合にブラウザが重くなる場合があります。長時間使用時はこまめにページを再読み込み（F5）することで安定します。</li>
-      <li><b>△ 条件付き動作:</b> <b>Safari（iPhone / Mac）</b><br>
-      短時間の使用では動作しますが、長時間使用時に音声認識が止まりやすい傾向があります。iPhoneでの使用は特に注意してください。</li>
-      <li><b>× 非対応:</b> <b>Vivaldi / Brave / Opera / Firefox</b>等<br>
-      音声認識サーバーへのアクセス権が含まれていないため動作しません。</li>
-      <li><b>マイク品質:</b> 認識精度はマイクに依存します。静かな環境での使用や外付けマイクの使用を推奨します。</li>
-      <li><b>文字化け対策:</b> 本ソフトは「BOM付きUTF-8」で保存します。Excel等でそのまま開いても文字化けしにくい仕様です。</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <h3>8. 困った時の対処法（Q&A）</h3>
+    <h3>8. 困った時の対処法（Q&amp;A）</h3>
     <ul>
       <li><b>Q. 字幕が出ない:</b> マイク許可を確認し、ページを再読み込みしてください。Vivaldi等では動作しません。</li>
       <li><b>Q. 音が出ない（読み上げない）:</b> 確定ログの<b>「翻訳文（大きな文字）」を直接タップ</b>してみてください。それでも鳴らない場合は、マナーモードの解除、メディア音量のアップ、または端末の設定でその言語の読み上げデータがインストールされているか確認してください。特にChromebookやAndroidでは、その言語の音声データをネットからダウンロードするのに時間がかかる場合があります（最初の1回目など）。<b>何度かタップして読み込ませる</b>か、端末の設定で「オフライン音声」をインストールしておくとスムーズになります。</li>
+      <li><b>Q. Edgeで動作が重くなったりクラッシュする:</b> ページを再読み込み（F5）してください。長時間使用時はこまめなF5が有効です。より安定した動作にはGoogle Chromeの使用を推奨します。</li>
       <li><b>Q. WATCHDOGと表示された:</b> 15秒間無音だったための接続リフレッシュです。そのまま発話を再開できます。</li>
       <li><b>Q. 文が細切れになる:</b> 上部バーの「分割」秒数を長め（1.5秒〜2.0秒等）に設定してください。</li>
     </ul>
@@ -469,7 +472,7 @@ html, body {
       <li><b>【推奨】保存ダイアログを非表示にする:</b> ブラウザの設定で「ダウンロード前に各ファイルの保存場所を確認する」を<b>オフ</b>にすると、フォルダへ直通で保存されスムーズです。</li>
       <li><b>Excel連携:</b> 保存されたファイルをメモ帳で開き、<b>中身を全選択（Ctrl+A）してコピーし、ExcelのA1セルに貼り付けてください。</b>時間・原文・翻訳が綺麗に整列します。</li>
       <li><b>自動バックアップ:</b> 設定した分数ごとにその時点の内容を自動保存します。</li>
-      <li><b>重複保存の仕様:</b> 「停止」ボタンを押した際にも最終ログが保存されます。自動保存とタイミングが重なり、同じ内容のファイルが2つ作成されることがありますが、これはデータ保護のための仕様です。</li>
+      <li><b>重複保存の仕様:</b> 「一時停止」ボタンを押した際にも最終ログが保存されます。自動保存とタイミングが重なり、同じ内容のファイルが2つ作成されることがありますが、これはデータ保護のための仕様です。</li>
     </ul>
   </div>
 
@@ -1052,16 +1055,13 @@ function updateUIMode() {
 
   btnToggle.onclick = () => {
     if (!isListening) {
-      isListening = true; 
-      // ★ 変更①②：開始時にログをクリアしない（一時停止→再開の概念）
-      // chatLog = [];        ← 削除（引き継ぐ）
-      // logContainer.innerHTML = ""; ← 削除（引き継ぐ）
+      isListening = true;
+      // ★ 開始時にログをクリアしない（一時停止→再開の概念）
       interimContainer.textContent = "";
       lastSpeechTime = Date.now();
       startAudioMonitor(); 
       initRecognition(); 
       startWatchdog();
-      // ★ 変更④：「停止」→「一時停止」に変更
       btnToggle.textContent = "一時停止"; 
       btnToggle.style.background = "#cc0000";
       autoSaveTimer = setInterval(saveLogFile, (parseFloat(autoSaveInput.value) || 10) * 60000);
@@ -1101,7 +1101,12 @@ function updateUIMode() {
     interimContainer.style.background = "rgba(255,255,255,0.2)";
     setTimeout(() => { interimContainer.style.background = "transparent"; }, 100);
     if (isListening) {
-      if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} }
+      if (recognition) {
+        recognition.onstart = recognition.onend = recognition.onresult =
+        recognition.onerror = recognition.onspeechend = null;
+        try { recognition.abort(); } catch(e) {}
+        recognition = null;
+      }
       setTimeout(() => { if (isListening) initRecognition(); }, 200);
     }
   }
@@ -1162,9 +1167,9 @@ function updateUIMode() {
   function enterKeyboardMode() {
     isKeyboardMode = true;
 
-    // 音声認識を一時停止（isListeningフラグは維持）
+    // 音声認識を一時停止（isListeningフラグは維持・再開するためabortではなくstop）
     if (recognition) {
-      recognition.onend = null;
+      recognition.onresult = null; // onresultだけ切る（onendは再起動に使うので残す）
       try { recognition.stop(); } catch(e) {}
     }
 
@@ -1475,17 +1480,24 @@ function updateUIMode() {
     if (e.code === 'Space') { e.preventDefault(); btnToggle.click(); }
   });
 
-  /* Ver.2.32-17 変更サマリー：一時停止機能・ログ手動消去・Edge対策継続
-     ★ 一時停止機能：開始時にログをクリアしない設計に変更
-        - 「停止」→「一時停止」に変更
-        - 開始時の chatLog=[] と logContainer.innerHTML="" を削除
-        - 停止→再開でログが引き継がれる
-     ★ 🗑ログ消去ボタン：ヘッダーに追加（手動クリア）
-        - リスナーを明示解放してからDOMを削除
-     （Ver.2.32-16からの継続）
-     ★ recognitionインスタンス完全破棄（Edge固有クラッシュ対策）
-     ★ fetchにAbortControllerタイムアウト管理
-     ★ utterances無限蓄積廃止・並列fetch防止・リスナー解放・mediaStream解放
+  /* Ver.2.32-18 変更サマリー：使い方モーダル全面改訂
+     ★ セクション順番を変更（ユーザーが最初に知るべき情報を前へ）
+        新1. 対応ブラウザ・推奨環境（旧7）← まず確認すべき情報
+        新2. 想定される使用用途（旧5）   ← 自分に合うか判断する
+        新3. 基本的な使用手順（旧1）
+        新4. 便利な操作・ショートカット（旧2）
+        新5. 表示・音声のカスタマイズ（旧3）
+        新6. セキュリティと文字起こし活用（旧4）
+        新7. スマホ・タブレットでの注意点（旧6）
+        新8. 困った時の対処法Q&A（旧8）← Edge対策Q&A追加
+        新9. データの保存と連携（旧9）
+        新10. 免責事項（旧10）
+     ★ 修正：「停止」→「一時停止」表記を全モーダルで統一
+     ★ 修正：セクション1とセクション2の重複項目を削除
+     ★ 追加：Q&AにEdgeクラッシュ対処法を追加
+     ★ 追加：セクション4の操作順を論理的に整理
+     （Ver.2.32-17からの継続）
+     - 一時停止機能・🗑ログ消去ボタン・Edge固有クラッシュ対策
   */
 </script>
 </body>
