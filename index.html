@@ -211,6 +211,10 @@ html, body {
 #log-container.equal-mode .log-item:not(:first-child) .trans-text { font-size: var(--main-fs) !important; }
 #log-container.equal-mode .log-item:not(:first-child) { opacity: 1.0 !important; }
 
+    #fab-box { position: fixed; right: 14px; bottom: 44px; display: flex; flex-direction: column; gap: 12px; z-index: 250; }
+    .fab { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #777; color: #fff; font-size: 28px; cursor: pointer; opacity: .85; box-shadow: 0 2px 10px #000; display:flex; align-items:center; justify-content:center; padding:0; touch-action: manipulation; user-select:none; }
+    .fab:hover, .fab:active { opacity: 1; transform: scale(1.08); }
+    #fab-swap { background:#444; } #fab-ok { background:#0a7a3a; } #fab-cancel { background:#a02020; }
     .footer-info { position: fixed; bottom: 10px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; pointer-events: none; z-index: 200; }
     .footer-text { 
       font-size: clamp(2px, 1.0vw, 20px);
@@ -321,6 +325,7 @@ html, body {
 
 <div class="group">暫定訳:<input type="checkbox" id="check-interim-trans"></div>
 <div class="group">逆翻訳:<input type="checkbox" id="check-re-trans"></div>
+<div class="group" title="右下の大きな操作ボタン（⇄ ✔ ✖）の表示">操作ボタン:<input type="checkbox" id="check-fab"></div>
 
   <div class="group">
     分割:<input type="number" id="split-sec" value="1.0" step="0.1" min="0.1" style="width:35px">s 
@@ -361,8 +366,13 @@ html, body {
   <div id="log-container"></div>
 </div>
 
+<div id="fab-box">
+  <button class="fab" id="fab-swap" title="音声⇄翻訳の言語を入れ替え">⇄</button>
+  <button class="fab" id="fab-ok" title="確定して翻訳（Enterと同じ）">✔</button>
+  <button class="fab" id="fab-cancel" title="確定前の入力を破棄（Escと同じ）">✖</button>
+</div>
 <div class="footer-info">
-  <div class="footer-text">インタプ (simultaneousINTERPreter) Ver.3.02 (2026/9/8更新)</div>
+  <div class="footer-text">インタプ (simultaneousINTERPreter) Ver.3.0203 (2026/11/18更新)</div>
   <div class="footer-text">Created by フジイヨウスケ with Gemini & ChatGPT & Claude</div>
 </div>
 
@@ -699,6 +709,55 @@ resizeHandle.addEventListener('touchstart', (e) => {
     selOut.innerHTML += `<option value="${l[2]}">${l[0]}</option>`;
   });
 
+
+  // ============================================================
+  // 翻訳エンジン（登録不要・無料）: Google(gtx) → 端末内AI → MyMemory → Lingva の順に自動切替
+  // ============================================================
+  const _tcache = {}, _blocked = {};
+  const _base = c => c.replace(/^(.+?)-.*$/, (m,a)=> /^zh-(TW|HK)$/i.test(m) ? 'zh-Hant' : a);
+  async function _onDevice(text, s, t) {
+    if (!('Translator' in self)) return null;
+    const k = s + '>' + t;
+    if (_tcache[k] === undefined) {
+      try {
+        const av = await Translator.availability({ sourceLanguage: s, targetLanguage: t });
+        if (av === 'available') _tcache[k] = await Translator.create({ sourceLanguage: s, targetLanguage: t });
+        else if (av === 'unavailable') _tcache[k] = false;
+        else return null;
+      } catch (e) { _tcache[k] = false; }
+    }
+    return _tcache[k] ? await _tcache[k].translate(text) : null;
+  }
+  function warmOnDevice() {
+    if (!('Translator' in self)) return;
+    const s = _base(selIn.value), t = _base(selOut.value);
+    if (s === t) return;
+    const k = s + '>' + t;
+    if (_tcache[k]) return;
+    Translator.availability({ sourceLanguage: s, targetLanguage: t }).then(av => {
+      if (av === 'downloadable' || av === 'downloading') Translator.create({ sourceLanguage: s, targetLanguage: t }).then(x => { _tcache[k] = x; }).catch(()=>{});
+    }).catch(()=>{});
+  }
+  async function _jget(url, signal) { const r = await fetch(url, { signal }); if (r.status === 429 || r.status === 403) { const e = new Error('limit'); e.name = 'LimitErr'; throw e; } if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
+  const _engines = [
+    ['gtx', async (x, s, t, sig) => { const d = await _jget(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${t}&dt=t&q=${encodeURIComponent(x)}`, sig); return d[0].map(a => a[0]).join(''); }],
+    ['dev', async (x, s, t) => _onDevice(x, _base(s), _base(t))],
+    ['mym', async (x, s, t, sig) => { if (x.length > 450) throw new Error('long'); const d = await _jget(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(x)}&langpair=${_base(s)}|${_base(t)}`, sig); if (d.responseStatus != 200) { const e = new Error('limit'); e.name = 'LimitErr'; throw e; } return d.responseData.translatedText; }],
+    ['lin', async (x, s, t, sig) => { const d = await _jget(`https://lingva.ml/api/v1/${_base(s)}/${_base(t)}/${encodeURIComponent(x)}`, sig); return d.translation; }]
+  ];
+  async function tr(text, s, t, signal, light) {
+    let limited = false;
+    for (const [n, fn] of (light ? _engines.slice(0, 2) : _engines)) {
+      if (_blocked[n] > Date.now()) { limited = true; continue; }
+      try { const r = await fn(text, s, t, signal); if (r) return r; }
+      catch (e) {
+        if (e.name === 'AbortError') throw e;
+        if (e.name === 'LimitErr') { _blocked[n] = Date.now() + 10 * 60000; limited = true; }
+      }
+    }
+    const e = new Error(limited ? 'limit' : 'fail'); e.name = limited ? 'LimitErr' : 'FailErr'; throw e;
+  }
+
   btnSwap.onclick = () => {
     const tempIn = selIn.value;
     const valOut = selOut.value;
@@ -707,8 +766,10 @@ resizeHandle.addEventListener('touchstart', (e) => {
     if (targetInRow)  selIn.value  = targetInRow[1];
     if (targetOutRow) selOut.value = targetOutRow[2];
     saveSettings();
+    warmOnDevice();
     if (isListening) restartRecognition();
   };
+  document.getElementById('fab-swap').onclick = () => btnSwap.click();
 
   let isListening = false, recognition, chatLog = [], lastSpeechTime = 0, autoSaveTimer, watchdogInterval, currentText = "";
   let audioContext, analyser, dataArray, animationId;
@@ -895,17 +956,11 @@ function updateUIMode() {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 3000);
           try {
-            const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(currentText)}`, { signal: ctrl.signal });
-            
-            if (res.status === 429 || res.status === 403) {
-              interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:#ff6666">[API制限中: 暫定訳停止]</span>`;
-            } else if (res.ok) {
-              const data = await res.json();
-              const trans = data[0].map(s => s[0]).join("");
-              interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
-            }
+            const trans = await tr(currentText, selIn.value, tl, ctrl.signal, true);
+            interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:${mainColor.value}">${trans}</span>`;
           } catch(e) {
-            if (e.name !== 'AbortError') interimContainer.textContent = currentText;
+            if (e.name === 'LimitErr') interimContainer.innerHTML = `<span class="interim-orig">${currentText}</span><span class="interim-trans" style="color:#ff6666">[API制限中: 暫定訳停止]</span>`;
+            else if (e.name !== 'AbortError') interimContainer.textContent = currentText;
           } finally {
             clearTimeout(t);
             isTranslatingInterim = false;
@@ -972,20 +1027,12 @@ async function commitTranslation(text) {
       const ctrl1 = new AbortController();
       const t1 = setTimeout(() => ctrl1.abort(), 5000);
       try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`, { signal: ctrl1.signal });
-        
-        // ★ 429 (Too Many Requests) や 403 (Forbidden) のAPI制限判定
-        if (res.status === 429 || res.status === 403) {
-          trans = "[API制限中] 短時間の連打制限（約1時間後に自動解除 / 暫定訳・逆翻訳OFFを推奨）";
-        } else if (!res.ok) {
-          trans = `[Translation Error: HTTP ${res.status}]`;
-        } else {
-          const data = await res.json();
-          trans = data[0].map(s => s[0]).join("");
-        }
+        trans = await tr(text, sl, tl, ctrl1.signal);
       } catch(e) { 
         if (e.name === 'AbortError') {
           trans = "[通信タイムアウト] 5秒以内に応答がありませんでした";
+        } else if (e.name === 'LimitErr') {
+          trans = "[API制限中] 全翻訳エンジンが制限中です（約10分後に自動再試行 / 暫定訳・逆翻訳OFFを推奨）";
         } else {
           trans = "[Translation Error]"; 
         }
@@ -998,16 +1045,7 @@ async function commitTranslation(text) {
       const ctrl2 = new AbortController();
       const t2 = setTimeout(() => ctrl2.abort(), 5000);
       try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${sl}&dt=t&q=${encodeURIComponent(trans)}`, { signal: ctrl2.signal });
-        
-        if (res.status === 429 || res.status === 403) {
-          reTrans = "[API制限中] 逆翻訳の制限";
-        } else if (!res.ok) {
-          reTrans = `[Re-translation Error: HTTP ${res.status}]`;
-        } else {
-          const data = await res.json();
-          reTrans = data[0].map(s => s[0]).join("");
-        }
+        reTrans = await tr(trans, tl, sl, ctrl2.signal);
       } catch(e) { 
         reTrans = e.name === 'AbortError' ? "[逆翻訳タイムアウト]" : "[Re-translation Error]"; 
       } finally { 
@@ -1089,6 +1127,7 @@ async function commitTranslation(text) {
   }
 
   btnToggle.onclick = () => {
+    warmOnDevice();
     if (!isListening) {
       isListening = true;
       // ★ 開始時にログをクリアしない（一時停止→再開の概念）
@@ -1362,17 +1401,13 @@ async function commitTranslation(text) {
 
     if (sl !== tl) {
       try {
-        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(newText)}`);
-        const data = await res.json();
-        newTrans = data[0].map(s => s[0]).join("");
+        newTrans = await tr(newText, sl, tl);
       } catch(e) { newTrans = "[Translation Error]"; }
     }
 
     if (isReTransOn && sl !== tl) {
       try {
-        const res  = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${sl}&dt=t&q=${encodeURIComponent(newTrans)}`);
-        const data = await res.json();
-        newReTrans = data[0].map(s => s[0]).join("");
+        newReTrans = await tr(newTrans, tl, sl);
       } catch(e) { newReTrans = "[Re-translation Error]"; }
     }
 
@@ -1411,34 +1446,27 @@ async function commitTranslation(text) {
   // ============================================================
   // キー操作（音声モード・キーボードモード共通）
   // ============================================================
+  function kbCancel() { interimContainer.textContent = ""; currentText = ""; exitKeyboardMode(true); }
+  function kbCommit() {
+    const textToCommit = interimContainer.textContent.trim();
+    if (!textToCommit) return;
+    currentText = ""; interimContainer.textContent = "";
+    exitKeyboardMode(false);
+    setTimeout(() => { commitTranslation(textToCommit).then(() => { if (isListening) setTimeout(() => { initRecognition(); }, 100); }); }, 200);
+  }
+  ['fab-swap','fab-ok','fab-cancel'].forEach(id => document.getElementById(id).addEventListener('mousedown', e => e.preventDefault()));
+  const chkFab = document.getElementById('check-fab'), fabBox = document.getElementById('fab-box');
+  const _sf = localStorage.getItem('showFab');
+  chkFab.checked = _sf === null ? window.innerWidth >= 700 : _sf === '1'; // 未設定時: 狭い画面(スマホ)はOFF
+  const applyFab = () => { fabBox.style.display = chkFab.checked ? 'flex' : 'none'; localStorage.setItem('showFab', chkFab.checked ? '1' : '0'); };
+  chkFab.onchange = applyFab; applyFab();
+  document.getElementById('fab-ok').onclick = () => { if (isKeyboardMode) kbCommit(); else forceCommit(); };
+  document.getElementById('fab-cancel').onclick = () => { if (isKeyboardMode) kbCancel(); else resetInterim(); };
   document.addEventListener('keydown', (e) => {
 
     if (isKeyboardMode) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        interimContainer.textContent = "";
-        currentText = "";
-        exitKeyboardMode(true);
-      }
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const editedText = interimContainer.textContent.trim();
-        if (editedText) {
-          // ★ テキストをローカルに退避してからモード解除
-          const textToCommit = editedText;
-          currentText = "";
-          interimContainer.textContent = "";
-          exitKeyboardMode(false);
-          // ★ 200ms待つ：exitKeyboardMode後に音声認識キューが
-          //    吐き出されてもisKeyboardMode=falseですり抜けないよう
-          //    キューが空になってからcommitする
-          setTimeout(() => {
-            commitTranslation(textToCommit).then(() => {
-              if (isListening) setTimeout(() => { initRecognition(); }, 100);
-            });
-          }, 200);
-        }
-      }
+      if (e.key === 'Escape') { e.preventDefault(); kbCancel(); }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kbCommit(); }
       return; // キーボードモード中は以下をスキップ
     }
 
